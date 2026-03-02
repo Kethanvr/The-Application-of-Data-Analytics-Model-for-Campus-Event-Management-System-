@@ -932,12 +932,22 @@ def analytics(request):
     submission_rate = (submissions.count() / total_assessments) * 100 if total_assessments > 0 else 0
     avg_score = submissions.aggregate(Avg('score'))['score__avg'] or 0
 
+    import json
+    dept_stats_list = [
+        {
+            'name': d['department__name'] or 'Unknown',
+            'count': d['event_count'],
+        }
+        for d in dept_stats
+    ]
+
     context = {
         'total_events': total_events,
         'approved_events': approved_events,
         'pending_events': pending_events,
         'total_budget': total_budget,
         'dept_stats': dept_stats,
+        'dept_stats_json': json.dumps(dept_stats_list),
         'total_assessments': total_assessments,
         'submission_rate': round(submission_rate, 2),
         'avg_score': round(avg_score, 2),

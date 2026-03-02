@@ -126,11 +126,16 @@
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
+{# Serialize chart data into safe JSON elements so JS has no Django template tags #}
+{{ dept_stats_json|json_script:"dept-data" }}
+
 <script>
-    // Department chart
-    const deptLabels = [{% for d in dept_stats %}"{{ d.department__name|default:'Unknown' }}"{% if not forloop.last %}, {% endif %} {% endfor %}];
-    const deptCounts = [{% for d in dept_stats %}{ { d.event_count } } {% if not forloop.last %}, {% endif %} {% endfor %}];
+    // Read the pre-serialized department data
+    var deptData = JSON.parse(document.getElementById('dept-data').textContent);
+    var deptLabels = deptData.map(function (d) { return d.name || 'Unknown'; });
+    var deptCounts = deptData.map(function (d) { return d.count; });
 
     new Chart(document.getElementById('deptChart'), {
         type: 'bar',
@@ -142,17 +147,20 @@
                 backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
             }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
     });
 
-    const submissionRate = {{ submission_rate }};
-    // Assessment doughnut chart
+    var submissionRate = parseFloat('{{ submission_rate }}') || 0;
     new Chart(document.getElementById('assessChart'), {
         type: 'doughnut',
         data: {
             labels: ['Submitted', 'Not Submitted'],
             datasets: [{
-                data: [submissionRate, (100 - submissionRate).toFixed(2)],
+                data: [submissionRate, parseFloat((100 - submissionRate).toFixed(2))],
                 backgroundColor: ['#1cc88a', '#e9ecef'],
             }]
         },
