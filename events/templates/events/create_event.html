@@ -1,0 +1,157 @@
+{% extends 'users/base.html' %}
+{% block title %}{% if event %}Edit Event{% else %}Create Event{% endif %} - CEMS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-{% if event %}edit{% else %}plus-circle{% endif %} text-primary mr-2"></i>
+        {% if event %}Edit Event{% else %}Create New Event{% endif %}
+    </h2>
+    <a href="{% url 'my_events' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left mr-1"></i> Back to My Events
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="post" id="eventForm">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Event Name <span class="text-danger">*</span></label>
+                        <input type="text" name="event_name" class="form-control form-control-lg"
+                            value="{{ event.name|default:'' }}" required
+                            placeholder="e.g. National Level Hackathon 2025">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Short Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" value="{{ event.title|default:'' }}"
+                            required placeholder="e.g. Hackathon 2025">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="font-weight-bold">About the Event <span class="text-danger">*</span></label>
+                <textarea name="about" class="form-control" rows="4" required
+                    placeholder="Describe the event, objectives, and target audience...">{{ event.about|default:'' }}</textarea>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Event Date <span class="text-danger">*</span></label>
+                        <input type="date" name="date" class="form-control"
+                            value="{{ event.date|date:'Y-m-d'|default:'' }}" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Event Time <span class="text-danger">*</span></label>
+                        <input type="time" name="time" class="form-control"
+                            value="{{ event.time|time:'H:i'|default:'' }}" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Expected Attendees <span class="text-danger">*</span></label>
+                        <input type="number" name="expected_attendees" class="form-control"
+                            value="{{ event.expected_attendees|default:'' }}" required min="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Mode <span class="text-danger">*</span></label>
+                        <select name="mode" class="form-control" id="modeSelect" required>
+                            <option value="OFFLINE" {% if event.mode=='OFFLINE' %}selected{% endif %}>Offline
+                                (In-person)</option>
+                            <option value="ONLINE" {% if event.mode=='ONLINE' %}selected{% endif %}>Online</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6" id="venueField">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Venue</label>
+                        <input type="text" name="venue" class="form-control" value="{{ event.venue|default:'' }}"
+                            placeholder="e.g. Seminar Hall, Block A">
+                    </div>
+                </div>
+                <div class="col-md-6" id="meetingLinkField" style="display:none;">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Meeting Link</label>
+                        <input type="url" name="meeting_link" class="form-control"
+                            value="{{ event.meeting_link|default:'' }}" placeholder="Zoom/Meet link">
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h5 class="mb-3"><i class="fas fa-rupee-sign text-warning mr-2"></i>Budget Details</h5>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Total Budget (₹)</label>
+                        <input type="number" name="budget" step="0.01" class="form-control"
+                            value="{{ event.budget|default:'' }}" min="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Registration Fee (₹)</label>
+                        <input type="number" name="registration_fee" step="0.01" class="form-control"
+                            value="{{ event.registration_fee|default:'0' }}" min="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Refreshment (₹)</label>
+                        <input type="number" name="refreshment" step="0.01" class="form-control"
+                            value="{{ event.refreshment|default:'0' }}" min="0">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Honorarium (₹)</label>
+                        <input type="number" name="honorarium" step="0.01" class="form-control"
+                            value="{{ event.honorarium|default:'0' }}" min="0">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="font-weight-bold">Renumeration</label>
+                <input type="text" name="renumeration" class="form-control" value="{{ event.renumeration|default:'' }}"
+                    placeholder="Faculty/resource renumeration details">
+            </div>
+            <div class="form-group">
+                <label class="font-weight-bold">Other Requirements</label>
+                <textarea name="other_requirements" class="form-control" rows="2"
+                    placeholder="Any other resource requirements...">{{ event.other_requirements|default:'' }}</textarea>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'my_events' %}" class="btn btn-outline-secondary mr-3">Cancel</a>
+                <button type="submit" class="btn btn-primary btn-lg px-5">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    {% if event %}Update Event{% else %}Submit for Approval{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('modeSelect').addEventListener('change', function () {
+        const mode = this.value;
+        document.getElementById('venueField').style.display = mode === 'OFFLINE' ? '' : 'none';
+        document.getElementById('meetingLinkField').style.display = mode === 'ONLINE' ? '' : 'none';
+    });
+</script>
+{% endblock %}

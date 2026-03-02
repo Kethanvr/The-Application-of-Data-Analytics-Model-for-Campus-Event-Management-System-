@@ -1,0 +1,168 @@
+{% extends 'users/base.html' %}
+{% block title %}Dashboard - CEMS{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-1">Welcome back, {{ user.get_first_name|default:user.username }}! 👋</h2>
+    <p class="text-muted">You are logged in as <strong>{{ user.get_full_name }}</strong> &mdash;
+        <span
+            class="badge badge-{% if user.role == 'PRINCIPAL' %}danger{% elif user.role == 'HOD' %}warning{% elif user.role == 'EVENT_COORDINATOR' %}info{% else %}secondary{% endif %} badge-pill px-3">{{
+            user.get_role_display|default:user.role }}</span>
+    </p>
+</div>
+
+{% if user.role == 'EVENT_COORDINATOR' %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'my_events' %}" class="text-decoration-none">
+            <div class="card shadow h-100 border-left-primary bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-list fa-3x text-primary mb-3"></i>
+                    <h5>My Events</h5>
+                    <p class="text-muted small mb-0">View and manage your events</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'create_event' %}" class="text-decoration-none">
+            <div class="card shadow h-100 border-left-success bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
+                    <h5>Create Event</h5>
+                    <p class="text-muted small mb-0">Submit a new event for approval</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'assessment_list' %}" class="text-decoration-none">
+            <div class="card shadow h-100 border-left-info bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-tasks fa-3x text-info mb-3"></i>
+                    <h5>Assessments</h5>
+                    <p class="text-muted small mb-0">Create and manage assessments</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+{% elif user.role == 'HOD' %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'hod_pending_events' %}" class="text-decoration-none">
+            <div class="card shadow border-left-warning bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                    <h5>Pending Approval</h5>
+                    <p class="text-muted small mb-0">Review events awaiting your approval</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'hod_approved_events' %}" class="text-decoration-none">
+            <div class="card shadow border-left-success bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5>Approved Events</h5>
+                    <p class="text-muted small mb-0">Events you have approved</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'hod_rejected_events' %}" class="text-decoration-none">
+            <div class="card shadow border-left-danger bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                    <h5>Rejected Events</h5>
+                    <p class="text-muted small mb-0">Events you have rejected</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+{% elif user.role == 'PRINCIPAL' %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'principal_pending_events' %}" class="text-decoration-none">
+            <div class="card shadow border-left-warning bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                    <h5>Pending</h5>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'principal_approved_events' %}" class="text-decoration-none">
+            <div class="card shadow border-left-success bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5>Approved</h5>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'principal_rejected_events' %}" class="text-decoration-none">
+            <div class="card shadow border-left-danger bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                    <h5>Rejected</h5>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'analytics' %}" class="text-decoration-none">
+            <div class="card shadow border-left-primary bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                    <h5>Analytics</h5>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+{% else %} <!-- STUDENT -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'available_events' %}" class="text-decoration-none">
+            <div class="card shadow border-left-primary bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                    <h5>Available Events</h5>
+                    <p class="text-muted small mb-0">Browse and register for events</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'student_assessment_list' %}" class="text-decoration-none">
+            <div class="card shadow border-left-info bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-tasks fa-3x text-info mb-3"></i>
+                    <h5>My Assessments</h5>
+                    <p class="text-muted small mb-0">Take and view your assessments</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4 mb-4">
+        <a href="{% url 'certificates' %}" class="text-decoration-none">
+            <div class="card shadow border-left-success bg-white">
+                <div class="card-body py-4 text-center">
+                    <i class="fas fa-certificate fa-3x text-success mb-3"></i>
+                    <h5>Certificates</h5>
+                    <p class="text-muted small mb-0">Download your event certificates</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Available Events - CEMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">
+                <i class="fas fa-calendar-alt text-primary mr-2"></i>Available Events
+            </h2>
+        </div>
+    </div>
+
+    <!-- Registered Events Section (if any) -->
+    {% if registered_events %}
+    <h4 class="mb-3"><i class="fas fa-check-circle text-success mr-2"></i>Your Upcoming Events</h4>
+    <div class="row mb-5">
+        {% for event in registered_events %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">{{ event.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-clock mr-1"></i> {{ event.date|date:"F d, Y" }} at {{ event.time|time:"g:i A"
+                        }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-map-marker-alt mr-1"></i> {{ event.venue }}
+                    </p>
+                    <p class="card-text">{{ event.description|truncatewords:20 }}</p>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Registered</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- All Available Events -->
+    <h4 class="mb-3"><i class="fas fa-calendar-day text-primary mr-2"></i>Events Open for Registration</h4>
+    <div class="row">
+        {% for event in events %}
+        {% if event not in registered_events %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ event.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-clock mr-1"></i> {{ event.date|date:"F d, Y" }} at {{ event.time|time:"g:i A"
+                        }}
+                    </p>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-map-marker-alt mr-1"></i> {{ event.venue }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-building mr-1"></i> Dept: {{ event.department }}
+                    </p>
+                    <p class="card-text">{{ event.description|truncatewords:20 }}</p>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <form method="post" action="{% url 'register_event' event.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Register Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle mr-2"></i>There are currently no new events available for registration.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
