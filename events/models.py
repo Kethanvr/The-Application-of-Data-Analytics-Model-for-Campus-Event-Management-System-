@@ -60,6 +60,9 @@ class Event(me.Document):
     def get_department_display(self):
         return dict(CustomUser.DEPARTMENT_CHOICES).get(self.department, self.department or '')
 
+    def get_department_display_name(self):
+        return dict(CustomUser.DEPARTMENT_CHOICES).get(self.department, self.department or '')
+
     def save(self, *args, **kwargs):
         from django.utils import timezone
         if not self.created_at:

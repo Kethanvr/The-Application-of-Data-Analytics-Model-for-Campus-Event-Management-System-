@@ -1,15 +1,31 @@
 {% extends 'users/base.html' %}
-{% block title %}{{ event.title }} - CEMS{% endblock %}
+{% block title %}{{ event.event_name }} — CEMS{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0"><i class="fas fa-calendar-check text-primary mr-2"></i>{{ event.title }}</h2>
     <div>
-        {% if user.role == 'EVENT_COORDINATOR' and event.coordinator == user %}
-        <a href="{% url 'create_event_edit' event.event_id %}" class="btn btn-outline-secondary mr-2">
+        <h2 class="mb-1 font-weight-800">
+            <i class="fas fa-calendar-check text-primary mr-2"></i>{{ event.event_name }}
+        </h2>
+        <p class="text-muted mb-0"><code>{{ event.event_id }}</code></p>
+    </div>
+    <div class="d-flex" style="gap:.5rem;">
+        {% if user.role == 'EVENT_COORDINATOR' %}
+        <a href="{% url 'edit_event' event.id %}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-edit mr-1"></i>Edit
         </a>
         {% endif %}
-        <a href="{% url 'my_events' %}" class="btn btn-outline-secondary">
+        {% if user.role in 'STUDENT' and event.status == 'PRINCIPAL_APPROVED' %}
+        <a href="{% url 'submit_feedback' event.id %}" class="btn btn-outline-warning btn-sm">
+            <i class="fas fa-comment mr-1"></i>Feedback
+        </a>
+        {% endif %}
+        {% if user.role in 'EVENT_COORDINATOR HOD' %}
+        <a href="{% url 'event_feedback_report' event.id %}" class="btn btn-outline-info btn-sm">
+            <i class="fas fa-chart-pie mr-1"></i>Feedback Report
+        </a>
+        {% endif %}
+        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-arrow-left mr-1"></i>Back
         </a>
     </div>
@@ -17,96 +33,159 @@
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                <h5 class="mb-0">Event Information</h5>
-                {% if event.status == 'PENDING' %}<span class="badge badge-warning badge-pill px-3 py-2">Pending
-                    Approval</span>
-                {% elif event.status == 'HOD_APPROVED' %}<span class="badge badge-info badge-pill px-3 py-2">HOD
-                    Approved</span>
-                {% elif event.status == 'PRINCIPAL_APPROVED' %}<span class="badge badge-success badge-pill px-3 py-2">✓
-                    Fully Approved</span>
-                {% elif event.status == 'HOD_REJECTED' %}<span class="badge badge-danger badge-pill px-3 py-2">HOD
-                    Rejected</span>
-                {% elif event.status == 'PRINCIPAL_REJECTED' %}<span
-                    class="badge badge-danger badge-pill px-3 py-2">Rejected</span>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 font-weight-700">Event Information</h5>
+                {% if event.status == 'PENDING' %}
+                <span class="badge badge-status-pending px-3 py-2">Pending Approval</span>
+                {% elif event.status == 'HOD_APPROVED' %}
+                <span class="badge badge-info px-3 py-2">HOD Approved</span>
+                {% elif event.status == 'PRINCIPAL_APPROVED' %}
+                <span class="badge badge-status-approved px-3 py-2"><i class="fas fa-check mr-1"></i>Fully Approved</span>
+                {% elif event.status == 'HOD_REJECTED' %}
+                <span class="badge badge-status-rejected px-3 py-2">HOD Rejected</span>
+                {% elif event.status == 'PRINCIPAL_REJECTED' %}
+                <span class="badge badge-status-rejected px-3 py-2">Rejected</span>
                 {% endif %}
             </div>
             <div class="card-body">
-                <p class="text-muted">{{ event.about }}</p>
+                <p class="text-muted mb-4">{{ event.about }}</p>
                 <hr>
                 <div class="row">
                     <div class="col-md-6">
-                        <p><i class="fas fa-tag text-primary mr-2"></i><strong>Event ID:</strong>
-                            <code>{{ event.event_id }}</code></p>
-                        <p><i class="fas fa-calendar text-primary mr-2"></i><strong>Date:</strong> {{ event.date|date:"F
-                            d, Y" }}</p>
-                        <p><i class="fas fa-clock text-primary mr-2"></i><strong>Time:</strong> {{ event.time|time:"g:i
-                            A" }}</p>
-                        <p><i class="fas fa-users text-primary mr-2"></i><strong>Expected Attendees:</strong> {{
-                            event.expected_attendees }}</p>
+                        <p class="mb-2">
+                            <i class="fas fa-calendar text-primary mr-2"></i>
+                            <strong>Date:</strong> {{ event.date|date:"F d, Y" }}
+                        </p>
+                        {% if event.time %}
+                        <p class="mb-2">
+                            <i class="fas fa-clock text-primary mr-2"></i>
+                            <strong>Time:</strong> {{ event.time|time:"g:i A" }}
+                        </p>
+                        {% endif %}
+                        <p class="mb-2">
+                            <i class="fas fa-users text-primary mr-2"></i>
+                            <strong>Expected Attendees:</strong> {{ event.expected_attendees|default:'—' }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-building text-primary mr-2"></i>
+                            <strong>Department:</strong> {{ event.get_department_display_name|default:event.department }}
+                        </p>
                     </div>
                     <div class="col-md-6">
-                        <p><i
-                                class="fas fa-{% if event.mode == 'ONLINE' %}video{% else %}map-marker-alt{% endif %} text-primary mr-2"></i><strong>Mode:</strong>
-                            {{ event.mode }}</p>
-                        {% if event.venue %}<p><i class="fas fa-building text-primary mr-2"></i><strong>Venue:</strong>
-                            {{ event.venue }}</p>{% endif %}
-                        {% if event.meeting_link %}<p><i
-                                class="fas fa-link text-primary mr-2"></i><strong>Link:</strong> <a
-                                href="{{ event.meeting_link }}" target="_blank" class="text-primary">Join Meeting</a>
-                        </p>{% endif %}
-                        <p><i class="fas fa-university text-primary mr-2"></i><strong>Department:</strong> {{
-                            event.department }}</p>
+                        <p class="mb-2">
+                            <i class="fas fa-{% if event.mode == 'ONLINE' %}video{% else %}map-marker-alt{% endif %} text-primary mr-2"></i>
+                            <strong>Mode:</strong> {{ event.mode }}
+                        </p>
+                        {% if event.venue %}
+                        <p class="mb-2">
+                            <i class="fas fa-map-pin text-primary mr-2"></i>
+                            <strong>Venue:</strong> {{ event.venue }}
+                        </p>
+                        {% endif %}
+                        {% if event.meeting_link %}
+                        <p class="mb-2">
+                            <i class="fas fa-link text-primary mr-2"></i>
+                            <strong>Meeting:</strong>
+                            <a href="{{ event.meeting_link }}" target="_blank" class="text-primary">Join Meeting</a>
+                        </p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
 
-        {% if event.schedule_set.all %}
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Schedule</h5>
+        <!-- Schedules -->
+        {% if schedules %}
+        <div class="card mb-4">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-calendar-alt mr-2 text-primary"></i>Session Schedule
             </div>
             <ul class="list-group list-group-flush">
-                {% for s in event.schedule_set.all %}
-                <li class="list-group-item d-flex justify-content-between">
-                    <span>{{ s.activity }}</span>
-                    <span class="text-muted">{{ s.start_time|time:"g:i A" }} – {{ s.end_time|time:"g:i A" }}</span>
+                {% for s in schedules %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ s.session_name }}</strong>
+                        </div>
+                        <div class="text-muted small">
+                            {{ s.start_time|date:"M d, H:i" }} — {{ s.end_time|date:"H:i" }}
+                        </div>
+                    </div>
                 </li>
                 {% endfor %}
             </ul>
         </div>
         {% endif %}
+
+        {% if rejection_reason %}
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Rejection Reason:</strong> {{ rejection_reason }}
+        </div>
+        {% endif %}
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="fas fa-rupee-sign text-warning mr-2"></i>Budget Breakdown</h5>
+        <!-- Budget -->
+        <div class="card mb-4">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-rupee-sign mr-2 text-warning"></i>Budget Breakdown
             </div>
             <ul class="list-group list-group-flush">
-                <li class="list-group-item d-flex justify-content-between"><span>Total Budget</span><strong>₹{{
-                        event.budget|floatformat:0 }}</strong></li>
-                <li class="list-group-item d-flex justify-content-between"><span>Registration Fee</span><span>₹{{
-                        event.registration_fee|floatformat:0 }}</span></li>
-                <li class="list-group-item d-flex justify-content-between"><span>Refreshment</span><span>₹{{
-                        event.refreshment|floatformat:0 }}</span></li>
-                <li class="list-group-item d-flex justify-content-between"><span>Honorarium</span><span>₹{{
-                        event.honorarium|floatformat:0 }}</span></li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="font-weight-600">Total Budget</span>
+                    <strong class="text-primary">₹{{ event.budget|floatformat:0 }}</strong>
+                </li>
+                {% if event.registration_fee %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Registration Fee</span><span>₹{{ event.registration_fee|floatformat:0 }}</span>
+                </li>
+                {% endif %}
+                {% if event.refreshment %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Refreshment</span><span>₹{{ event.refreshment|floatformat:0 }}</span>
+                </li>
+                {% endif %}
+                {% if event.honorarium %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Honorarium</span><span>₹{{ event.honorarium|floatformat:0 }}</span>
+                </li>
+                {% endif %}
+                {% if event.renumeration %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Remuneration</span><span>₹{{ event.renumeration|floatformat:0 }}</span>
+                </li>
+                {% endif %}
             </ul>
         </div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="fas fa-user-tie text-secondary mr-2"></i>Coordinator</h5>
+        <!-- Coordinator -->
+        <div class="card mb-4">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-user-tie mr-2 text-secondary"></i>Coordinator
             </div>
             <div class="card-body">
-                <p class="mb-1"><strong>{{ event.coordinator.get_full_name }}</strong></p>
+                <p class="mb-1 font-weight-700">{{ event.coordinator.get_full_name }}</p>
                 <p class="text-muted small mb-0">{{ event.coordinator.email }}</p>
-                <p class="text-muted small">{{ event.department }}</p>
+                <p class="text-muted small">{{ event.get_department_display_name|default:event.department }}</p>
             </div>
         </div>
+
+        <!-- Quick actions for coordinator -->
+        {% if user.role == 'EVENT_COORDINATOR' and event.status == 'PRINCIPAL_APPROVED' %}
+        <div class="card">
+            <div class="card-header font-weight-700">Quick Actions</div>
+            <div class="card-body">
+                <a href="{% url 'generate_certificates' event.id %}" class="btn btn-outline-success btn-block btn-sm mb-2">
+                    <i class="fas fa-certificate mr-1"></i>Generate Certificates
+                </a>
+                <a href="{% url 'event_participants' event.id %}" class="btn btn-outline-primary btn-block btn-sm">
+                    <i class="fas fa-users mr-1"></i>View Participants
+                </a>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

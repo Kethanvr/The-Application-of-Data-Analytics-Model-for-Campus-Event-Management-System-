@@ -169,9 +169,10 @@ def my_events(request):
 @login_required
 def event_detail(request, event_id):
     event = _get_event_or_404(event_id)
+    schedules = list(EventSchedule.objects(event=event).order_by('start_time'))
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render(request, 'events/event_detail_modal.html', {'event': event})
-    return render(request, 'events/event_detail.html', {'event': event})
+    return render(request, 'events/event_detail.html', {'event': event, 'schedules': schedules})
 
 
 @login_required
@@ -1126,17 +1127,57 @@ def upload_material(request):
 
 
 @login_required
+def download_certificate(request, event_id):
+    """Serve the certificate PDF for a student."""
+    from django.http import HttpResponse, FileResponse
+    from django.core.files.storage import default_storage
+
+    event = _get_by_id_or_404(Event, event_id)
+    registration = EventRegistration.objects(
+        event=event, student=request.user, certificate_generated=True
+    ).first()
+
+    if not registration or not registration.certificate_url:
+        messages.error(request, 'Certificate not found. Please complete the assessment first.')
+        return redirect('certificates')
+
+    try:
+        cert_path = registration.certificate_url.lstrip('/')
+        if cert_path.startswith('media/'):
+            cert_path = cert_path[len('media/'):]
+        file = default_storage.open(cert_path, 'rb')
+        response = HttpResponse(file.read(), content_type='application/pdf')
+        safe_name = f"certificate_{event.event_id}_{request.user.username}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{safe_name}"'
+        return response
+    except Exception:
+        # If the file doesn't exist yet, generate it on-the-fly
+        from .utils import generate_certificate
+        try:
+            cert_url, _ = generate_certificate(event, request.user)
+            registration.certificate_url = cert_url
+            registration.save()
+            cert_path = cert_url.lstrip('/media/')
+            file = default_storage.open(cert_path, 'rb')
+            response = HttpResponse(file.read(), content_type='application/pdf')
+            safe_name = f"certificate_{event.event_id}_{request.user.username}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{safe_name}"'
+            return response
+        except Exception as e:
+            messages.error(request, f'Error generating certificate: {str(e)}')
+            return redirect('certificates')
+
+
+@login_required
 def view_materials(request):
     if request.user.role == 'STUDENT':
         reg_event_ids = [r.event.id for r in EventRegistration.objects(student=request.user) if r.event]
         events = list(Event.objects(id__in=reg_event_ids, status='PRINCIPAL_APPROVED').order_by('-date'))
-        for event in events:
-            event._materials = list(EventMaterial.objects(event=event))
-        return render(request, 'events/view_materials.html', {'registered_events': events})
+        event_data = [{'event': ev, 'materials': list(EventMaterial.objects(event=ev))} for ev in events]
+        return render(request, 'events/view_materials.html', {'event_data': event_data})
     elif request.user.role == 'EVENT_COORDINATOR':
         events = list(Event.objects(coordinator=request.user, status='PRINCIPAL_APPROVED').order_by('-date'))
-        for event in events:
-            event._materials = list(EventMaterial.objects(event=event))
-        return render(request, 'events/view_materials.html', {'registered_events': events})
+        event_data = [{'event': ev, 'materials': list(EventMaterial.objects(event=ev))} for ev in events]
+        return render(request, 'events/view_materials.html', {'event_data': event_data})
     messages.error(request, 'Access denied.')
     return redirect('dashboard')

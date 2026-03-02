@@ -1,0 +1,63 @@
+{% extends 'users/base.html' %}
+{% block title %}Online Events — CEMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-video mr-2 text-primary"></i>Online Events</h2>
+    <p>Virtual workshops, webinars, and online sessions you're registered for</p>
+</div>
+
+{% if registered_online_events %}
+<div class="row">
+    {% for reg in registered_online_events %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header text-white" style="background:linear-gradient(135deg,#0C2340,#1a3a5c);">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mr-3"
+                         style="width:36px;height:36px;background:rgba(234,179,8,.25);flex-shrink:0;">
+                        <i class="fas fa-video text-warning fa-sm"></i>
+                    </div>
+                    <span class="text-white font-weight-700 small text-truncate">{{ reg.event.event_name }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small"><i class="fas fa-calendar mr-1"></i>{{ reg.event.date|date:"M d, Y" }}</span>
+                    {% if reg.event.time %}
+                    <span class="text-muted small"><i class="fas fa-clock mr-1"></i>{{ reg.event.time|time:"H:i" }}</span>
+                    {% endif %}
+                </div>
+                <p class="small text-muted mb-3">{{ reg.event.about|truncatewords:20 }}</p>
+
+                {% if reg.event.meeting_link %}
+                <a href="{{ reg.event.meeting_link }}" target="_blank" class="btn btn-success btn-sm btn-block mb-2">
+                    <i class="fas fa-video mr-1"></i>Join Meeting
+                </a>
+                {% else %}
+                <button class="btn btn-secondary btn-sm btn-block mb-2" disabled>
+                    <i class="fas fa-clock mr-1"></i>Link Pending
+                </button>
+                {% endif %}
+
+                <a href="{% url 'event_detail' reg.event.id %}" class="btn btn-outline-primary btn-sm btn-block">
+                    <i class="fas fa-info-circle mr-1"></i>Event Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-video text-muted"></i>
+        <h5>No Online Events</h5>
+        <p class="text-muted">You have no online events scheduled. Browse available events to register.</p>
+        <a href="{% url 'available_events' %}" class="btn btn-accent mt-2">
+            <i class="fas fa-calendar mr-1"></i>Browse Events
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

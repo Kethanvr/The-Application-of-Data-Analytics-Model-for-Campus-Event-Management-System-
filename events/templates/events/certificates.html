@@ -1,24 +1,39 @@
 {% extends 'users/base.html' %}
-{% block title %}Certificates - CEMS{% endblock %}
+{% block title %}My Certificates — CEMS{% endblock %}
+
 {% block content %}
-<h2 class="mb-4"><i class="fas fa-certificate text-warning mr-2"></i>My Certificates</h2>
+<div class="page-header">
+    <h2><i class="fas fa-medal mr-2 text-warning"></i>My Certificates</h2>
+    <p>Your earned participation and achievement certificates</p>
+</div>
 
 {% if events %}
 <div class="row">
     {% for event in events %}
     <div class="col-md-4 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-gradient-warning text-white"
-                style="background: linear-gradient(135deg,#f6c23e,#e2a30a);">
-                <h6 class="mb-0"><i class="fas fa-award mr-2"></i>{{ event.title }}</h6>
+        <div class="card h-100">
+            <div class="card-header text-white" style="background:linear-gradient(135deg,#b8860b,#EAB308);">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-award fa-lg mr-2"></i>
+                    <h6 class="mb-0 text-truncate">{{ event.event_name }}</h6>
+                </div>
             </div>
             <div class="card-body text-center py-4">
-                <i class="fas fa-certificate fa-4x text-warning mb-3"></i>
-                <p class="text-muted small">{{ event.date|date:"F d, Y" }}</p>
-                <p class="text-muted small">{{ event.department }}</p>
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                     style="width:80px;height:80px;background:linear-gradient(135deg,#fff8e1,#ffd54f);">
+                    <i class="fas fa-certificate fa-2x text-warning"></i>
+                </div>
+                <p class="font-weight-700 mb-1">Certificate of Participation</p>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-calendar mr-1"></i>{{ event.date|date:"F d, Y" }}
+                </p>
+                <p class="text-muted small">
+                    <i class="fas fa-building mr-1"></i>{{ event.get_department_display_name|default:event.department }}
+                </p>
             </div>
-            <div class="card-footer bg-white border-top-0">
-                <a href="{% url 'download_certificate' event.id %}" class="btn btn-warning btn-block text-white">
+            <div class="card-footer bg-white border-top">
+                <a href="{% url 'download_certificate' event.id %}"
+                   class="btn btn-warning btn-block text-dark font-weight-600">
                     <i class="fas fa-download mr-2"></i>Download PDF
                 </a>
             </div>
@@ -27,13 +42,15 @@
     {% endfor %}
 </div>
 {% else %}
-<div class="text-center py-5">
-    <i class="fas fa-certificate fa-4x text-muted mb-3"></i>
-    <h5 class="text-muted">No certificates yet</h5>
-    <p class="text-muted">Complete your registrations and attend events to earn certificates!</p>
-    <a href="{% url 'available_events' %}" class="btn btn-primary">
-        <i class="fas fa-calendar mr-2"></i>Browse Events
-    </a>
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-medal text-muted"></i>
+        <h5>No Certificates Yet</h5>
+        <p class="text-muted">Register for events, complete assessments, and earn your certificates!</p>
+        <a href="{% url 'available_events' %}" class="btn btn-accent mt-2">
+            <i class="fas fa-calendar mr-1"></i>Browse Events
+        </a>
+    </div>
 </div>
 {% endif %}
 {% endblock %}

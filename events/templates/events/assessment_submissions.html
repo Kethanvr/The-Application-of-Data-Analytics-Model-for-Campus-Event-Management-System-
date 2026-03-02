@@ -1,0 +1,142 @@
+{% extends 'users/base.html' %}
+{% block title %}Submissions — {{ assessment.title }} — CEMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h2><i class="fas fa-users mr-2 text-primary"></i>Submissions</h2>
+        <p>{{ assessment.title }} — {{ assessment.event.event_name }}</p>
+    </div>
+    <a href="{% url 'assessment_detail' assessment.id %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left mr-1"></i>Back
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#0C2340,#1a3a5c);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small opacity-75">Total Submissions</p>
+                        <h2>{{ submissions|length }}</h2>
+                    </div>
+                    <i class="fas fa-file-alt stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#28a745,#20c997);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small opacity-75">Passed</p>
+                        <h2>{{ pass_count|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-check-circle stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#dc3545,#e8503b);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small opacity-75">Failed</p>
+                        <h2>{{ fail_count|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-times-circle stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#EAB308,#ca9f07);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small opacity-75">Avg Score</p>
+                        <h2>{{ avg_score|floatformat:1|default:'—' }}%</h2>
+                    </div>
+                    <i class="fas fa-chart-line stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submissions table -->
+<div class="card">
+    <div class="card-header font-weight-700 d-flex justify-content-between">
+        <span>All Submissions</span>
+        <span class="text-muted small">Passing score: {{ assessment.passing_score }}%</span>
+    </div>
+    {% if submissions %}
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <strong>{{ sub.student.get_full_name }}</strong>
+                        <br><span class="text-muted small">{{ sub.student.username }}</span>
+                    </td>
+                    <td>
+                        {% if sub.score is not None %}
+                        <div class="progress" style="height:8px;width:80px;">
+                            <div class="progress-bar {% if sub.score >= assessment.passing_score %}bg-success{% else %}bg-danger{% endif %}"
+                                 style="width:{{ sub.score }}%"></div>
+                        </div>
+                        <small>{{ sub.score|floatformat:1 }}%</small>
+                        {% else %}
+                        <span class="text-muted small">Not graded</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sub.score is not None %}
+                            {% if sub.score >= assessment.passing_score %}
+                            <span class="badge badge-status-approved">Passed</span>
+                            {% else %}
+                            <span class="badge badge-status-rejected">Failed</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="badge badge-status-pending">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ sub.submitted_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'grade_assessment' sub.id %}" class="btn btn-xs btn-outline-primary">
+                            <i class="fas fa-star mr-1"></i>Grade
+                        </a>
+                        <a href="{% url 'assessment_result' sub.id %}" class="btn btn-xs btn-outline-secondary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox text-muted"></i>
+        <h5>No Submissions Yet</h5>
+        <p class="text-muted">Submissions will appear here once students complete the assessment.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

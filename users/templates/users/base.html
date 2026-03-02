@@ -3,41 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}CEMS - Campus Event Management System{% endblock %}</title>
+    <title>{% block title %}CEMS — Campus Event Management{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #f8f9fa; }
-        .navbar-brand { font-weight: 700; }
-        .sidebar { min-height: calc(100vh - 56px); background: #0C2340; }
-        .sidebar .nav-link { color: rgba(255,255,255,0.8); }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,0.1); border-radius: 5px; }
-        .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .badge-role { font-size: 0.75rem; }
+        :root {
+            --sidebar-bg: #0C2340;
+            --sidebar-hover: rgba(255,255,255,0.12);
+            --sidebar-active: rgba(234,179,8,0.25);
+            --accent: #EAB308;
+            --accent-dark: #ca9f07;
+            --text-muted-light: rgba(255,255,255,0.55);
+        }
+        body { background:#f0f2f5; font-family:'Segoe UI',system-ui,sans-serif; }
+
+        /* ── Sidebar ─────────────────────── */
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background: var(--sidebar-bg);
+            width: 230px;
+            flex-shrink: 0;
+            padding: 1.25rem 0;
+        }
+        .sidebar .sidebar-section {
+            font-size: .65rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--text-muted-light);
+            padding: .75rem 1.25rem .25rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,.78);
+            padding: .55rem 1.25rem;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            font-size: .88rem;
+            transition: background .15s, color .15s;
+        }
+        .sidebar .nav-link i { width: 18px; text-align: center; font-size: .95rem; }
+        .sidebar .nav-link:hover { color:#fff; background: var(--sidebar-hover); text-decoration:none; }
+        .sidebar .nav-link.active { color: var(--accent); background: var(--sidebar-active); font-weight:600; }
+        .sidebar .nav-divider { border-top: 1px solid rgba(255,255,255,.1); margin: .5rem 1.25rem; }
+
+        /* ── Navbar ──────────────────────── */
+        .navbar { background: var(--sidebar-bg) !important; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+        .navbar-brand { font-weight: 800; font-size: 1.2rem; letter-spacing: .02em; }
+        .navbar-brand span { color: var(--accent); }
+        .user-pill {
+            background: rgba(255,255,255,.1);
+            border-radius: 50px;
+            padding: .3rem .85rem;
+            display:flex; align-items:center; gap:.5rem;
+        }
+        .role-badge {
+            font-size:.68rem; font-weight:700; letter-spacing:.05em;
+            background: var(--accent); color:#000; border-radius:50px;
+            padding:.15rem .55rem;
+        }
+
+        /* ── Layout ──────────────────────── */
+        .main-wrapper { display:flex; }
+        .main-content { flex:1; padding:1.75rem 2rem; min-width:0; }
+
+        /* ── Cards ───────────────────────── */
+        .card { border:none; box-shadow:0 1px 6px rgba(0,0,0,.08); border-radius:.6rem; }
+        .card-header { font-weight:600; border-bottom:1px solid rgba(0,0,0,.06); }
+        .stat-card { border-radius:.75rem; overflow:hidden; }
+        .stat-card .stat-icon { font-size:2rem; opacity:.25; }
+        .stat-card h2 { font-size:2rem; font-weight:800; }
+
+        /* ── Badges / Status ─────────────── */
+        .badge-status-pending  { background:#fff3cd; color:#856404; }
+        .badge-status-approved { background:#d1e7dd; color:#0a3622; }
+        .badge-status-rejected { background:#f8d7da; color:#842029; }
+
+        /* ── Tables ──────────────────────── */
+        .table th { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:#6c757d; font-weight:600; border-top:none; }
+        .table td { vertical-align:middle; font-size:.9rem; }
+
+        /* ── Alerts ──────────────────────── */
+        .alert { border:none; border-radius:.6rem; }
+
+        /* ── Misc ────────────────────────── */
+        .page-header { margin-bottom:1.5rem; }
+        .page-header h2 { font-weight:700; font-size:1.5rem; }
+        .page-header p  { color:#6c757d; margin:0; }
+        .empty-state { text-align:center; padding:4rem 2rem; color:#adb5bd; }
+        .empty-state i { font-size:3.5rem; margin-bottom:1rem; display:block; }
+        .empty-state h5 { color:#6c757d; font-weight:600; }
+        .btn-accent { background:var(--accent); color:#000; font-weight:600; border:none; }
+        .btn-accent:hover { background:var(--accent-dark); color:#000; }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark" style="background:#0C2340;">
-    <a class="navbar-brand" href="/">
-        <i class="fas fa-calendar-check me-2"></i> CEMS
+
+<!-- ── Navbar ──────────────────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <a class="navbar-brand text-white" href="/">
+        <i class="fas fa-calendar-check mr-2" style="color:var(--accent)"></i>
+        CE<span>MS</span>
     </a>
     {% if user.is_authenticated %}
     <div class="ml-auto d-flex align-items-center">
-        <span class="text-white mr-3">
-            <i class="fas fa-user-circle"></i>
-            {{ user.get_full_name|default:user.username }}
-            <span class="badge badge-warning badge-role ml-1">{{ user.role }}</span>
-        </span>
-        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
+        <div class="user-pill text-white mr-3">
+            <i class="fas fa-user-circle fa-lg"></i>
+            <span class="font-weight-600 small">{{ user.get_full_name|default:user.username }}</span>
+            <span class="role-badge">{{ user.role|default:'USER' }}</span>
+        </div>
+        <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light">
+            <i class="fas fa-sign-out-alt mr-1"></i>Logout
+        </a>
     </div>
     {% endif %}
 </nav>
 
+<!-- ── Flash messages ──────────────────────────────────────────────────── -->
 {% if messages %}
-<div class="container mt-3">
+<div style="position:fixed;top:70px;right:1rem;z-index:9999;min-width:300px;">
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+        {% if message.tags == 'success' %}<i class="fas fa-check-circle mr-2"></i>
+        {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fas fa-exclamation-circle mr-2"></i>
+        {% elif message.tags == 'warning' %}<i class="fas fa-exclamation-triangle mr-2"></i>
+        {% else %}<i class="fas fa-info-circle mr-2"></i>{% endif %}
         {{ message }}
         <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
     </div>
@@ -45,47 +137,133 @@
 </div>
 {% endif %}
 
-<div class="container-fluid">
-    <div class="row">
-        {% if user.is_authenticated %}
-        <div class="col-md-2 sidebar py-3">
-            <nav class="nav flex-column">
-                {% if user.role == 'EVENT_COORDINATOR' %}
-                <a class="nav-link" href="{% url 'my_events' %}"><i class="fas fa-list mr-2"></i>My Events</a>
-                <a class="nav-link" href="{% url 'create_event' %}"><i class="fas fa-plus mr-2"></i>Create Event</a>
-                <a class="nav-link" href="{% url 'analytics' %}"><i class="fas fa-chart-bar mr-2"></i>Analytics</a>
-                <a class="nav-link" href="{% url 'assessment_list' %}"><i class="fas fa-tasks mr-2"></i>Assessments</a>
-                {% elif user.role == 'HOD' %}
-                <a class="nav-link" href="{% url 'hod_pending_events' %}"><i class="fas fa-clock mr-2"></i>Pending Events</a>
-                <a class="nav-link" href="{% url 'hod_approved_events' %}"><i class="fas fa-check mr-2"></i>Approved</a>
-                <a class="nav-link" href="{% url 'hod_rejected_events' %}"><i class="fas fa-times mr-2"></i>Rejected</a>
-                {% elif user.role == 'PRINCIPAL' %}
-                <a class="nav-link" href="{% url 'principal_pending_events' %}"><i class="fas fa-clock mr-2"></i>Pending Events</a>
-                <a class="nav-link" href="{% url 'principal_approved_events' %}"><i class="fas fa-check mr-2"></i>Approved</a>
-                <a class="nav-link" href="{% url 'principal_rejected_events' %}"><i class="fas fa-times mr-2"></i>Rejected</a>
-                <a class="nav-link" href="{% url 'analytics' %}"><i class="fas fa-chart-bar mr-2"></i>Analytics</a>
-                {% else %}
-                <a class="nav-link" href="{% url 'available_events' %}"><i class="fas fa-calendar mr-2"></i>Events</a>
-                <a class="nav-link" href="{% url 'student_assessment_list' %}"><i class="fas fa-tasks mr-2"></i>Assessments</a>
-                <a class="nav-link" href="{% url 'certificates' %}"><i class="fas fa-certificate mr-2"></i>Certificates</a>
-                {% endif %}
-                <a class="nav-link" href="/admin/"><i class="fas fa-cog mr-2"></i>Admin</a>
-            </nav>
-        </div>
-        <div class="col-md-10 py-4">
-            {% block content %}{% endblock %}
-        </div>
-        {% else %}
-        <div class="col-12">
-            {% block content_full %}{% endblock %}
-        </div>
+{% if user.is_authenticated %}
+<!-- ── Authenticated layout: sidebar + content ─────────────────────────── -->
+<div class="main-wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        {% if user.role == 'EVENT_COORDINATOR' %}
+        <span class="sidebar-section">Events</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'my_events' %}active{% endif %}"
+           href="{% url 'my_events' %}">
+            <i class="fas fa-list-alt"></i>My Events
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'create_event' %}active{% endif %}"
+           href="{% url 'create_event' %}">
+            <i class="fas fa-plus-circle"></i>Create Event
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'event_scheduler' %}active{% endif %}"
+           href="{% url 'event_scheduler' %}">
+            <i class="fas fa-calendar-alt"></i>Event Scheduler
+        </a>
+        <div class="nav-divider"></div>
+        <span class="sidebar-section">Learning</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'assessment_list' %}active{% endif %}"
+           href="{% url 'assessment_list' %}">
+            <i class="fas fa-tasks"></i>Assessments
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'upload_material' %}active{% endif %}"
+           href="{% url 'upload_material' %}">
+            <i class="fas fa-upload"></i>Study Materials
+        </a>
+        <div class="nav-divider"></div>
+        <span class="sidebar-section">Insights</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'certificates' %}active{% endif %}"
+           href="{% url 'certificates' %}">
+            <i class="fas fa-certificate"></i>Certificates
+        </a>
+
+        {% elif user.role == 'HOD' %}
+        <span class="sidebar-section">Approvals</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'hod_pending_events' %}active{% endif %}"
+           href="{% url 'hod_pending_events' %}">
+            <i class="fas fa-hourglass-half"></i>Pending Review
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'hod_approved_events' %}active{% endif %}"
+           href="{% url 'hod_approved_events' %}">
+            <i class="fas fa-check-circle"></i>Approved Events
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'hod_rejected_events' %}active{% endif %}"
+           href="{% url 'hod_rejected_events' %}">
+            <i class="fas fa-times-circle"></i>Rejected Events
+        </a>
+        <div class="nav-divider"></div>
+        <span class="sidebar-section">Insights</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}"
+           href="{% url 'analytics' %}">
+            <i class="fas fa-chart-bar"></i>Analytics
+        </a>
+
+        {% elif user.role == 'PRINCIPAL' %}
+        <span class="sidebar-section">Approvals</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'principal_pending_events' %}active{% endif %}"
+           href="{% url 'principal_pending_events' %}">
+            <i class="fas fa-hourglass-half"></i>Pending Review
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'principal_approved_events' %}active{% endif %}"
+           href="{% url 'principal_approved_events' %}">
+            <i class="fas fa-check-circle"></i>Approved Events
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'principal_rejected_events' %}active{% endif %}"
+           href="{% url 'principal_rejected_events' %}">
+            <i class="fas fa-times-circle"></i>Rejected Events
+        </a>
+        <div class="nav-divider"></div>
+        <span class="sidebar-section">Insights</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}"
+           href="{% url 'analytics' %}">
+            <i class="fas fa-chart-line"></i>Analytics
+        </a>
+
+        {% else %}{# STUDENT #}
+        <span class="sidebar-section">Events</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'available_events' %}active{% endif %}"
+           href="{% url 'available_events' %}">
+            <i class="fas fa-calendar"></i>Browse Events
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'online_events' %}active{% endif %}"
+           href="{% url 'online_events' %}">
+            <i class="fas fa-video"></i>Online Events
+        </a>
+        <div class="nav-divider"></div>
+        <span class="sidebar-section">Learning</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'student_assessment_list' %}active{% endif %}"
+           href="{% url 'student_assessment_list' %}">
+            <i class="fas fa-tasks"></i>Assessments
+        </a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'view_materials' %}active{% endif %}"
+           href="{% url 'view_materials' %}">
+            <i class="fas fa-book"></i>Study Materials
+        </a>
+        <div class="nav-divider"></div>
+        <span class="sidebar-section">Achievements</span>
+        <a class="nav-link {% if request.resolver_match.url_name == 'certificates' %}active{% endif %}"
+           href="{% url 'certificates' %}">
+            <i class="fas fa-medal"></i>My Certificates
+        </a>
         {% endif %}
+
+        <div class="nav-divider"></div>
+        <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+           href="{% url 'profile' %}">
+            <i class="fas fa-user-cog"></i>My Profile
+        </a>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
     </div>
 </div>
 
+{% else %}
+<!-- Unauthenticated full-width -->
+<div>{% block content_full %}{% endblock %}</div>
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

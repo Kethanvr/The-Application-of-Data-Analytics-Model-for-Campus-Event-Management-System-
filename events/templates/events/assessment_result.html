@@ -1,0 +1,80 @@
+{% extends 'users/base.html' %}
+{% block title %}Assessment Result — CEMS{% endblock %}
+
+{% block content %}
+<div class="page-header text-center">
+    <h2><i class="fas fa-chart-bar mr-2 text-primary"></i>Assessment Result</h2>
+    <p>{{ submission.assessment.event.event_name }} — {{ submission.assessment.title }}</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Score card -->
+        <div class="card mb-4 text-center">
+            <div class="card-body py-5">
+                {% if submission.score is not None %}
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                     style="width:120px;height:120px;background:{% if passed %}linear-gradient(135deg,#28a745,#20c997){% else %}linear-gradient(135deg,#dc3545,#e8503b){% endif %};">
+                    <span class="text-white font-weight-800" style="font-size:2rem;">{{ submission.score|floatformat:0 }}%</span>
+                </div>
+                <h3 class="font-weight-800 mt-2">
+                    {% if passed %}
+                    <span class="text-success">🎉 Congratulations! You Passed</span>
+                    {% else %}
+                    <span class="text-danger">Better Luck Next Time</span>
+                    {% endif %}
+                </h3>
+                <p class="text-muted">Passing score: {{ submission.assessment.passing_score }}%</p>
+                {% else %}
+                <i class="fas fa-hourglass-half fa-3x text-warning mb-3 d-block"></i>
+                <h4 class="font-weight-700">Awaiting Evaluation</h4>
+                <p class="text-muted">Your submission is being reviewed by the coordinator.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Answer review -->
+        {% if answers %}
+        <div class="card mb-4">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-list-alt mr-2"></i>Answer Review
+            </div>
+            <div class="card-body p-0">
+                {% for ans in answers %}
+                <div class="px-4 py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <p class="font-weight-600 mb-1">Q{{ forloop.counter }}. {{ ans.question.question_text }}</p>
+                        {% if ans.is_correct is not None %}
+                        <span class="badge badge-{% if ans.is_correct %}success{% else %}danger{% endif %} ml-3 flex-shrink-0">
+                            {% if ans.is_correct %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-times"></i>{% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="mb-1 small">
+                        <span class="text-muted">Your answer: </span>
+                        <strong>{{ ans.selected_option.option_text|default:ans.text_answer|default:'—' }}</strong>
+                    </p>
+                    {% if not ans.is_correct and ans.question.correct_option %}
+                    <p class="mb-0 small text-success">
+                        <i class="fas fa-check-circle mr-1"></i>Correct: {{ ans.question.correct_option.option_text }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 justify-content-center">
+            <a href="{% url 'student_assessment_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left mr-1"></i>All Assessments
+            </a>
+            {% if passed %}
+            <a href="{% url 'certificates' %}" class="btn btn-success">
+                <i class="fas fa-certificate mr-1"></i>View Certificates
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

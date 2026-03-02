@@ -52,4 +52,5 @@ urlpatterns = [
     path('view-materials/', views.view_materials, name='view_materials'),
 
     path('online-events/', views.online_events, name='online_events'),
+    path('download-certificate/<str:event_id>/', views.download_certificate, name='download_certificate'),
 ]
