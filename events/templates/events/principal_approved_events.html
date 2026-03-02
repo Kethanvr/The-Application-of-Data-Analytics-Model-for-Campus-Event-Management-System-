@@ -12,7 +12,7 @@
 <div class="card mb-3" style="border-left:4px solid #28a745;">
     <div class="card-body">
         <div class="row align-items-center">
-            <div class="col-md-8">
+            <div class="col-12 col-md-8 mb-2 mb-md-0">
                 <h5 class="mb-1 font-weight-700">
                     {{ event.event_name }}
                     <code class="small text-muted ml-2">{{ event.event_id }}</code>
@@ -25,10 +25,10 @@
                     <i class="fas fa-building mr-1"></i>{{ event.get_department_display_name|default:event.department }}
                 </p>
             </div>
-            <div class="col-md-2 text-center">
+            <div class="col-6 col-md-2 text-center">
                 <span class="badge badge-status-approved px-3 py-2">Approved</span>
             </div>
-            <div class="col-md-2 text-right">
+            <div class="col-6 col-md-2 text-right">
                 <a href="{% url 'event_detail' event.id %}" class="btn btn-sm btn-outline-primary">
                     <i class="fas fa-eye mr-1"></i>View
                 </a>
