@@ -1,0 +1,82 @@
+{% extends 'users/base.html' %}
+{% block title %}Study Materials — CEMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-book-open mr-2 text-primary"></i>Study Materials</h2>
+    <p>Upload reference materials for your approved events</p>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-upload mr-2"></i>Upload Material
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="font-weight-600">Event <span class="text-danger">*</span></label>
+                        <select name="event" class="form-control" required>
+                            <option value="">Select event…</option>
+                            {% for ev in events %}
+                            <option value="{{ ev.id }}">{{ ev.event_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-600">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control"
+                               placeholder="e.g. Workshop Slides" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-600">Description</label>
+                        <textarea name="description" class="form-control" rows="2"
+                                  placeholder="Brief description of the material…"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-600">File <span class="text-danger">*</span></label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" name="material_file"
+                                   id="materialFile" required>
+                            <label class="custom-file-label" for="materialFile">Choose file</label>
+                        </div>
+                        <small class="text-muted">PDF, PPT, DOC, ZIP, images supported</small>
+                    </div>
+                    {% if not events %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        You need an approved event to upload materials.
+                        <a href="{% url 'create_event' %}">Create one</a>
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-accent btn-block" {% if not events %}disabled{% endif %}>
+                        <i class="fas fa-upload mr-1"></i>Upload
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-folder-open mr-2"></i>Recent Uploads
+            </div>
+            <div class="card-body text-center text-muted py-5">
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3 d-block text-muted"></i>
+                <p>Uploaded materials will be listed here.<br>Students registered for your events can access them.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$('.custom-file-input').on('change', function() {
+    $(this).next('.custom-file-label').text(this.files[0]?.name || 'Choose file');
+});
+</script>
+{% endblock %}

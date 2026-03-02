@@ -68,9 +68,9 @@
                     <div class="form-group">
                         <label class="font-weight-bold">Mode <span class="text-danger">*</span></label>
                         <select name="mode" class="form-control" id="modeSelect" required>
-                            <option value="OFFLINE" {% if event.mode=='OFFLINE' %}selected{% endif %}>Offline
+                            <option value="OFFLINE" {% if event.mode == 'OFFLINE' %}selected{% endif %}>Offline
                                 (In-person)</option>
-                            <option value="ONLINE" {% if event.mode=='ONLINE' %}selected{% endif %}>Online</option>
+                            <option value="ONLINE" {% if event.mode == 'ONLINE' %}selected{% endif %}>Online</option>
                         </select>
                     </div>
                 </div>

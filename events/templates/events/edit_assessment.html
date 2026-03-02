@@ -1,0 +1,8 @@
+{% extends 'users/base.html' %}
+{% block title %}Edit Assessment — CEMS{% endblock %}
+
+{% block content %}
+{% with assessment=assessment event=assessment.event %}
+{% include 'events/create_assessment.html' %}
+{% endwith %}
+{% endblock %}

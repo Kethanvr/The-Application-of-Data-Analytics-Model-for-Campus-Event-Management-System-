@@ -1,0 +1,108 @@
+{% extends 'users/base.html' %}
+{% block title %}Event Feedback — CEMS{% endblock %}
+
+{% block content %}
+<div class="page-header text-center">
+    <h2><i class="fas fa-comment-dots mr-2 text-primary"></i>Event Feedback</h2>
+    <p>Share your experience for <strong>{{ event.event_name }}</strong></p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        {% if already_submitted %}
+        <div class="card text-center py-5">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-3x text-success mb-3 d-block"></i>
+                <h4 class="font-weight-700">Feedback Already Submitted</h4>
+                <p class="text-muted">Thank you! You have already submitted feedback for this event.</p>
+                <a href="{% url 'available_events' %}" class="btn btn-outline-primary mt-2">Back to Events</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="font-weight-700">Overall Rating <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-2" id="star-rating">
+                            {% for i in "12345" %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input sr-only" type="radio" name="rating"
+                                       id="star{{ i }}" value="{{ i }}" required>
+                                <label class="form-check-label star-label" for="star{{ i }}"
+                                       style="font-size:2rem;cursor:pointer;color:#ccc;">★</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-700">Organization Quality</label>
+                        <select name="organization_rating" class="form-control">
+                            <option value="">Select rating</option>
+                            <option value="5">Excellent</option>
+                            <option value="4">Good</option>
+                            <option value="3">Average</option>
+                            <option value="2">Below Average</option>
+                            <option value="1">Poor</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-700">Content Quality</label>
+                        <select name="content_rating" class="form-control">
+                            <option value="">Select rating</option>
+                            <option value="5">Excellent</option>
+                            <option value="4">Good</option>
+                            <option value="3">Average</option>
+                            <option value="2">Below Average</option>
+                            <option value="1">Poor</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-700">Feedback <span class="text-danger">*</span></label>
+                        <textarea name="feedback_text" class="form-control" rows="4"
+                                  placeholder="Share your thoughts, suggestions, or highlights…" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-700">Would you recommend this event?</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="recommend" id="rec_yes" value="yes">
+                                <label class="form-check-label" for="rec_yes">Yes, definitely!</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="recommend" id="rec_no" value="no">
+                                <label class="form-check-label" for="rec_no">Not really</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent btn-block btn-lg">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Feedback
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const stars = document.querySelectorAll('.star-label');
+stars.forEach((star, i) => {
+    star.addEventListener('mouseover', () => stars.forEach((s, j) => s.style.color = j <= i ? '#EAB308' : '#ccc'));
+    star.addEventListener('mouseout', () => {
+        const checked = document.querySelector('input[name=rating]:checked');
+        const val = checked ? parseInt(checked.value) - 1 : -1;
+        stars.forEach((s, j) => s.style.color = j <= val ? '#EAB308' : '#ccc');
+    });
+    star.addEventListener('click', () => stars.forEach((s, j) => s.style.color = j <= i ? '#EAB308' : '#ccc'));
+});
+</script>
+{% endblock %}

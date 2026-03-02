@@ -1,0 +1,145 @@
+{% extends 'users/base.html' %}
+{% block title %}Event Scheduler — CEMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="fas fa-calendar-alt mr-2 text-primary"></i>Event Scheduler</h2>
+    <p>Manage online sessions and meeting links for your events</p>
+</div>
+
+{% if events %}
+<form method="post" class="card mb-4">
+    {% csrf_token %}
+    <div class="card-header font-weight-700">
+        <i class="fas fa-plus mr-2"></i>Add Sessions to an Event
+    </div>
+    <div class="card-body">
+        <div class="form-group">
+            <label class="font-weight-600">Select Event <span class="text-danger">*</span></label>
+            <select name="event" class="form-control" required>
+                <option value="">Choose event…</option>
+                {% for ev in events %}
+                <option value="{{ ev.id }}">{{ ev.event_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="font-weight-600">Meeting Link</label>
+            <input type="url" name="meeting_link" class="form-control"
+                   placeholder="https://meet.google.com/...">
+            <small class="text-muted">Sets or updates the Zoom/Meet link for the event</small>
+        </div>
+
+        <div id="sessions-wrapper">
+            <div class="session-row border rounded p-3 mb-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="small text-muted">Session Name <span class="text-danger">*</span></label>
+                        <input type="text" name="session_name[]" class="form-control form-control-sm"
+                               placeholder="e.g. Opening Keynote" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted">Start Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" name="start_time[]" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted">End Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" name="end_time[]" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-session btn-block">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" id="add-session" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="fas fa-plus mr-1"></i>Add Another Session
+        </button>
+        <br>
+        <button type="submit" class="btn btn-accent">
+            <i class="fas fa-save mr-1"></i>Save Schedule
+        </button>
+    </div>
+</form>
+{% endif %}
+
+<!-- Existing schedules -->
+<div class="card">
+    <div class="card-header font-weight-700">
+        <i class="fas fa-list mr-2"></i>Existing Sessions
+    </div>
+    {% if event_schedules %}
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th>Session Name</th>
+                    <th>Event</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in event_schedules %}
+                <tr>
+                    <td><strong>{{ s.session_name }}</strong></td>
+                    <td class="small text-muted">{{ s.event.event_name }}</td>
+                    <td class="small">{{ s.start_time|date:"M d, Y H:i" }}</td>
+                    <td class="small">{{ s.end_time|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <button class="btn btn-xs btn-outline-danger delete-schedule"
+                                data-id="{{ s.id }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state py-4">
+        <i class="fas fa-calendar-times text-muted"></i>
+        <p class="text-muted">No sessions scheduled yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% if not events %}
+<div class="card mt-4">
+    <div class="empty-state">
+        <i class="fas fa-calendar-alt text-muted"></i>
+        <h5>No Approved Online Events</h5>
+        <p class="text-muted">Only approved online events appear here. Create an online event first.</p>
+        <a href="{% url 'create_event' %}" class="btn btn-accent mt-2">
+            <i class="fas fa-plus mr-1"></i>Create Event
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$('#add-session').on('click', function() {
+    const clone = $('.session-row').first().clone();
+    clone.find('input').val('');
+    $('#sessions-wrapper').append(clone);
+});
+
+$(document).on('click', '.remove-session', function() {
+    if ($('.session-row').length > 1) $(this).closest('.session-row').remove();
+});
+
+$(document).on('click', '.delete-schedule', function() {
+    if (!confirm('Delete this session?')) return;
+    const id = $(this).data('id');
+    $.post(`/events/delete-schedule/${id}/`, {'csrfmiddlewaretoken': '{{ csrf_token }}'})
+        .done(data => { if (data.success) location.reload(); else alert(data.message); });
+});
+</script>
+{% endblock %}

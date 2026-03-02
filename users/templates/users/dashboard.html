@@ -1,165 +1,376 @@
 {% extends 'users/base.html' %}
-{% block title %}Dashboard - CEMS{% endblock %}
+{% block title %}Dashboard — CEMS{% endblock %}
+
 {% block content %}
-<div class="mb-4">
-    <h2 class="mb-1">Welcome back, {{ user.get_first_name|default:user.username }}! 👋</h2>
-    <p class="text-muted">You are logged in as <strong>{{ user.get_full_name }}</strong> &mdash;
-        <span
-            class="badge badge-{% if user.role == 'PRINCIPAL' %}danger{% elif user.role == 'HOD' %}warning{% elif user.role == 'EVENT_COORDINATOR' %}info{% else %}secondary{% endif %} badge-pill px-3">{{
-            user.get_role_display|default:user.role }}</span>
-    </p>
+<!-- Greeting -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="font-weight-800 mb-1">
+            Welcome back, {{ user.get_full_name|default:user.username }}!
+        </h2>
+        <p class="text-muted mb-0">
+            <span class="badge badge-{% if user.role == 'PRINCIPAL' %}danger{% elif user.role == 'HOD' %}warning{% elif user.role == 'EVENT_COORDINATOR' %}info{% else %}secondary{% endif %} badge-pill px-3">
+                {{ user.get_role_display|default:user.role }}
+            </span>
+            {% if user.department %}
+            &nbsp;·&nbsp; {{ user.get_department_display_name|default:user.department }}
+            {% endif %}
+        </p>
+    </div>
+    <span class="text-muted small">{% now "l, F j, Y" %}</span>
 </div>
 
+<!-- ─── EVENT COORDINATOR ──────────────────────────────────────────── -->
 {% if user.role == 'EVENT_COORDINATOR' %}
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <a href="{% url 'my_events' %}" class="text-decoration-none">
-            <div class="card shadow h-100 border-left-primary bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-list fa-3x text-primary mb-3"></i>
-                    <h5>My Events</h5>
-                    <p class="text-muted small mb-0">View and manage your events</p>
+
+<!-- Stats row -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#0C2340,#1a3a5c);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Total Events</p>
+                        <h2 class="mb-0">{{ stats.total|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-alt stat-icon"></i>
                 </div>
             </div>
-        </a>
+        </div>
     </div>
-    <div class="col-md-4 mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#28a745,#20c997);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Approved</p>
+                        <h2 class="mb-0">{{ stats.approved|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-check-circle stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#EAB308,#ca9f07);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Pending</p>
+                        <h2 class="mb-0">{{ stats.pending|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-hourglass-half stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#6f42c1,#8b5cf6);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Total Registrations</p>
+                        <h2 class="mb-0">{{ stats.registrations|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick actions -->
+<h5 class="font-weight-700 mb-3">Quick Actions</h5>
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
         <a href="{% url 'create_event' %}" class="text-decoration-none">
-            <div class="card shadow h-100 border-left-success bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
-                    <h5>Create Event</h5>
-                    <p class="text-muted small mb-0">Submit a new event for approval</p>
-                </div>
+            <div class="card h-100 text-center p-3" style="border:2px dashed #dee2e6;transition:border-color .2s;"
+                 onmouseover="this.style.borderColor='#0C2340'" onmouseout="this.style.borderColor='#dee2e6'">
+                <i class="fas fa-plus-circle fa-2x text-primary mb-2 mt-2"></i>
+                <h6 class="font-weight-700">Create Event</h6>
+                <p class="text-muted small mb-0">Submit a new event proposal</p>
             </div>
         </a>
     </div>
-    <div class="col-md-4 mb-4">
+    <div class="col-md-3 mb-3">
+        <a href="{% url 'my_events' %}" class="text-decoration-none">
+            <div class="card h-100 text-center p-3">
+                <i class="fas fa-list-alt fa-2x text-info mb-2 mt-2"></i>
+                <h6 class="font-weight-700">My Events</h6>
+                <p class="text-muted small mb-0">View and manage events</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-3">
         <a href="{% url 'assessment_list' %}" class="text-decoration-none">
-            <div class="card shadow h-100 border-left-info bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-tasks fa-3x text-info mb-3"></i>
-                    <h5>Assessments</h5>
-                    <p class="text-muted small mb-0">Create and manage assessments</p>
-                </div>
+            <div class="card h-100 text-center p-3">
+                <i class="fas fa-tasks fa-2x text-warning mb-2 mt-2"></i>
+                <h6 class="font-weight-700">Assessments</h6>
+                <p class="text-muted small mb-0">Create online tests</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-3">
+        <a href="{% url 'event_scheduler' %}" class="text-decoration-none">
+            <div class="card h-100 text-center p-3">
+                <i class="fas fa-calendar-alt fa-2x text-success mb-2 mt-2"></i>
+                <h6 class="font-weight-700">Scheduler</h6>
+                <p class="text-muted small mb-0">Manage event sessions</p>
             </div>
         </a>
     </div>
 </div>
 
+<!-- Recent events table -->
+{% if recent_events %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center font-weight-700">
+        <span>Recent Events</span>
+        <a href="{% url 'my_events' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead class="thead-light">
+                <tr><th>Event</th><th>Date</th><th>Registrations</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for ev in recent_events %}
+                <tr>
+                    <td><strong>{{ ev.event_name }}</strong><br><small class="text-muted">{{ ev.event_id }}</small></td>
+                    <td class="small">{{ ev.date|date:"M d, Y" }}</td>
+                    <td><span class="badge badge-secondary">{{ ev.reg_count|default:0 }}</span></td>
+                    <td>
+                        <span class="badge badge-status-{{ ev.status|lower }}">{{ ev.get_status_display }}</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'event_detail' ev.id %}" class="btn btn-xs btn-outline-secondary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- ─── HOD ──────────────────────────────────────────────────────────── -->
 {% elif user.role == 'HOD' %}
-<div class="row">
-    <div class="col-md-4 mb-4">
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
         <a href="{% url 'hod_pending_events' %}" class="text-decoration-none">
-            <div class="card shadow border-left-warning bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-clock fa-3x text-warning mb-3"></i>
-                    <h5>Pending Approval</h5>
-                    <p class="text-muted small mb-0">Review events awaiting your approval</p>
+            <div class="card stat-card text-white" style="background:linear-gradient(135deg,#EAB308,#ca9f07);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 small" style="opacity:.75;">Pending Review</p>
+                            <h2 class="mb-0">{{ stats.pending|default:0 }}</h2>
+                        </div>
+                        <i class="fas fa-hourglass-half stat-icon"></i>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
-    <div class="col-md-4 mb-4">
+    <div class="col-md-4 mb-3">
         <a href="{% url 'hod_approved_events' %}" class="text-decoration-none">
-            <div class="card shadow border-left-success bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                    <h5>Approved Events</h5>
-                    <p class="text-muted small mb-0">Events you have approved</p>
+            <div class="card stat-card text-white" style="background:linear-gradient(135deg,#28a745,#20c997);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 small" style="opacity:.75;">Approved</p>
+                            <h2 class="mb-0">{{ stats.approved|default:0 }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle stat-icon"></i>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
-    <div class="col-md-4 mb-4">
+    <div class="col-md-4 mb-3">
         <a href="{% url 'hod_rejected_events' %}" class="text-decoration-none">
-            <div class="card shadow border-left-danger bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
-                    <h5>Rejected Events</h5>
-                    <p class="text-muted small mb-0">Events you have rejected</p>
+            <div class="card stat-card text-white" style="background:linear-gradient(135deg,#dc3545,#e8503b);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 small" style="opacity:.75;">Rejected</p>
+                            <h2 class="mb-0">{{ stats.rejected|default:0 }}</h2>
+                        </div>
+                        <i class="fas fa-times-circle stat-icon"></i>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
 </div>
 
+{% if stats.pending > 0 %}
+<div class="alert alert-warning d-flex align-items-center">
+    <i class="fas fa-exclamation-triangle fa-lg mr-3"></i>
+    <div>
+        <strong>{{ stats.pending }} event{{ stats.pending|pluralize }} awaiting your review.</strong>
+        <a href="{% url 'hod_pending_events' %}" class="ml-2">Review now →</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- ─── PRINCIPAL ─────────────────────────────────────────────────────── -->
 {% elif user.role == 'PRINCIPAL' %}
-<div class="row">
-    <div class="col-md-3 mb-4">
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
         <a href="{% url 'principal_pending_events' %}" class="text-decoration-none">
-            <div class="card shadow border-left-warning bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-clock fa-3x text-warning mb-3"></i>
-                    <h5>Pending</h5>
+            <div class="card stat-card text-white" style="background:linear-gradient(135deg,#EAB308,#ca9f07);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 small" style="opacity:.75;">Pending</p><h2 class="mb-0">{{ stats.pending|default:0 }}</h2></div>
+                        <i class="fas fa-hourglass-half stat-icon"></i>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
-    <div class="col-md-3 mb-4">
+    <div class="col-md-3 mb-3">
         <a href="{% url 'principal_approved_events' %}" class="text-decoration-none">
-            <div class="card shadow border-left-success bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                    <h5>Approved</h5>
+            <div class="card stat-card text-white" style="background:linear-gradient(135deg,#28a745,#20c997);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 small" style="opacity:.75;">Approved</p><h2 class="mb-0">{{ stats.approved|default:0 }}</h2></div>
+                        <i class="fas fa-check-circle stat-icon"></i>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
-    <div class="col-md-3 mb-4">
+    <div class="col-md-3 mb-3">
         <a href="{% url 'principal_rejected_events' %}" class="text-decoration-none">
-            <div class="card shadow border-left-danger bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
-                    <h5>Rejected</h5>
+            <div class="card stat-card text-white" style="background:linear-gradient(135deg,#dc3545,#e8503b);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 small" style="opacity:.75;">Rejected</p><h2 class="mb-0">{{ stats.rejected|default:0 }}</h2></div>
+                        <i class="fas fa-times-circle stat-icon"></i>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
-    <div class="col-md-3 mb-4">
+    <div class="col-md-3 mb-3">
         <a href="{% url 'analytics' %}" class="text-decoration-none">
-            <div class="card shadow border-left-primary bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
-                    <h5>Analytics</h5>
+            <div class="card stat-card text-white" style="background:linear-gradient(135deg,#0C2340,#1a3a5c);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 small" style="opacity:.75;">All Events</p><h2 class="mb-0">{{ stats.total|default:0 }}</h2></div>
+                        <i class="fas fa-chart-bar stat-icon"></i>
+                    </div>
                 </div>
             </div>
         </a>
     </div>
 </div>
 
-{% else %} <!-- STUDENT -->
+{% if stats.pending > 0 %}
+<div class="alert alert-warning d-flex align-items-center">
+    <i class="fas fa-exclamation-triangle fa-lg mr-3"></i>
+    <div>
+        <strong>{{ stats.pending }} event{{ stats.pending|pluralize }} need your final approval.</strong>
+        <a href="{% url 'principal_pending_events' %}" class="ml-2">Review now →</a>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-2">
+    <div class="col-md-6">
+        <a href="{% url 'analytics' %}" class="btn btn-outline-primary btn-block">
+            <i class="fas fa-chart-line mr-2"></i>View Institutional Analytics
+        </a>
+    </div>
+</div>
+
+<!-- ─── STUDENT ───────────────────────────────────────────────────────── -->
+{% else %}
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#0C2340,#1a3a5c);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Registered Events</p>
+                        <h2 class="mb-0">{{ stats.registered|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-check stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#6f42c1,#8b5cf6);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Assessments</p>
+                        <h2 class="mb-0">{{ stats.assessments|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-tasks stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#EAB308,#ca9f07);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Certificates Earned</p>
+                        <h2 class="mb-0">{{ stats.certificates|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-medal stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#28a745,#20c997);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Events Available</p>
+                        <h2 class="mb-0">{{ stats.available|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-plus stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-4 mb-4">
+    <div class="col-md-4 mb-3">
         <a href="{% url 'available_events' %}" class="text-decoration-none">
-            <div class="card shadow border-left-primary bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
-                    <h5>Available Events</h5>
-                    <p class="text-muted small mb-0">Browse and register for events</p>
-                </div>
+            <div class="card text-center p-3 h-100">
+                <i class="fas fa-calendar-alt fa-2x text-primary mb-2 mt-2"></i>
+                <h6 class="font-weight-700">Browse Events</h6>
+                <p class="text-muted small mb-0">Discover and register for events</p>
             </div>
         </a>
     </div>
-    <div class="col-md-4 mb-4">
+    <div class="col-md-4 mb-3">
         <a href="{% url 'student_assessment_list' %}" class="text-decoration-none">
-            <div class="card shadow border-left-info bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-tasks fa-3x text-info mb-3"></i>
-                    <h5>My Assessments</h5>
-                    <p class="text-muted small mb-0">Take and view your assessments</p>
-                </div>
+            <div class="card text-center p-3 h-100">
+                <i class="fas fa-tasks fa-2x text-warning mb-2 mt-2"></i>
+                <h6 class="font-weight-700">My Assessments</h6>
+                <p class="text-muted small mb-0">Take online tests and quizzes</p>
             </div>
         </a>
     </div>
-    <div class="col-md-4 mb-4">
+    <div class="col-md-4 mb-3">
         <a href="{% url 'certificates' %}" class="text-decoration-none">
-            <div class="card shadow border-left-success bg-white">
-                <div class="card-body py-4 text-center">
-                    <i class="fas fa-certificate fa-3x text-success mb-3"></i>
-                    <h5>Certificates</h5>
-                    <p class="text-muted small mb-0">Download your event certificates</p>
-                </div>
+            <div class="card text-center p-3 h-100">
+                <i class="fas fa-medal fa-2x text-warning mb-2 mt-2"></i>
+                <h6 class="font-weight-700">My Certificates</h6>
+                <p class="text-muted small mb-0">Download participation certificates</p>
             </div>
         </a>
     </div>

@@ -486,22 +486,15 @@ def generate_certificate(event, student):
 
 def verify_certificate(verification_id):
     """
-    Verify a certificate using its verification ID
-    
-    Args:
-        verification_id: The unique verification ID for the certificate
-    
-    Returns:
-        dict: Certificate verification details or None if not found
+    Verify a certificate using its verification ID.
     """
     from .models import EventRegistration
-    
+
     try:
-        # Extract verification ID from the certificate URL
-        registration = EventRegistration.objects.filter(
+        registration = EventRegistration.objects(
             certificate_url__contains=verification_id
         ).first()
-        
+
         if registration:
             return {
                 'valid': True,
@@ -509,7 +502,8 @@ def verify_certificate(verification_id):
                 'event_name': registration.event.event_name,
                 'event_date': registration.event.date.strftime('%d %B, %Y'),
                 'department': registration.event.get_department_display(),
-                'issue_date': registration.certificate_generated_date.strftime('%d %B, %Y') if hasattr(registration, 'certificate_generated_date') else 'Unknown'
+                'issue_date': registration.certificate_generated_date.strftime('%d %B, %Y')
+                              if registration.certificate_generated_date else 'Unknown',
             }
         return {'valid': False, 'message': 'Certificate not found'}
     except Exception as e:
@@ -518,52 +512,35 @@ def verify_certificate(verification_id):
 
 def check_and_generate_certificates(event):
     """
-    Generate certificates for students who have been graded for an event.
-    No restrictions on when certificates can be generated.
-    
-    Args:
-        event: The Event object
-        
-    Returns:
-        bool: True if certificates were generated, False otherwise
+    Generate certificates for students who passed at least one assessment for the event.
     """
     from .models import EventAssessment, AssessmentSubmission, EventRegistration
-    
-    # Get all students registered for this event
-    registrations = EventRegistration.objects.filter(event=event)
-    registered_students = [reg.student for reg in registrations]
-    
-    if not registered_students:
+
+    registrations = list(EventRegistration.objects(event=event))
+    if not registrations:
         return False
-    
-    # Get all assessments for this event
-    assessments = EventAssessment.objects.filter(event=event)
-    
-    # Find students who have at least one graded submission with passing score
+
+    assessments = list(EventAssessment.objects(event=event))
     students_with_passing_grades = set()
-    
+
     for assessment in assessments:
-        # Get students who have graded submissions with passing score for this assessment
-        graded_students = AssessmentSubmission.objects.filter(
+        subs = AssessmentSubmission.objects(
             assessment=assessment,
-            student__in=registered_students,
-            score__isnull=False,
-            score__gte=assessment.passing_score  # Only include students who meet the passing score
-        ).values_list('student', flat=True)
-        
-        # Add these students to our set
-        students_with_passing_grades.update(graded_students)
-    
-    # Generate certificates for students who have at least one graded submission with passing score
+            score__gte=assessment.passing_score,
+        )
+        for sub in subs:
+            if sub.score is not None:
+                students_with_passing_grades.add(str(sub.student.id))
+
     certificates_generated = False
-    
     for registration in registrations:
-        if registration.student.id in students_with_passing_grades and not registration.certificate_generated:
+        if (str(registration.student.id) in students_with_passing_grades
+                and not registration.certificate_generated):
             certificate_url, verification_id = generate_certificate(event, registration.student)
             registration.certificate_url = certificate_url
             registration.certificate_generated = True
             registration.certificate_generated_date = datetime.now()
             registration.save()
             certificates_generated = True
-    
+
     return certificates_generated

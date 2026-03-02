@@ -1,0 +1,128 @@
+{% extends 'users/base.html' %}
+{% block title %}{{ assessment.title }} — CEMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    #timer { font-size: 1.5rem; font-weight: 800; color: #dc3545; font-family: monospace; }
+    .question-card { border-left: 4px solid #0C2340; }
+    .option-label {
+        cursor: pointer; padding: .5rem .75rem; border-radius: .4rem;
+        border: 1px solid transparent; transition: all .15s; display: block;
+    }
+    .option-label:hover { background: #f0f4ff; border-color: #dee2e6; }
+    input[type=radio]:checked + .option-label { background: #dbeafe; border-color: #3b82f6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="page-header">
+            <h2><i class="fas fa-pencil-alt mr-2 text-primary"></i>{{ assessment.title }}</h2>
+            <p>{{ assessment.event.event_name }}</p>
+        </div>
+
+        <form method="post" id="assessment-form" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if has_questions %}
+                {% for q in questions %}
+                <div class="card mb-3 question-card">
+                    <div class="card-body">
+                        <p class="font-weight-700 mb-3">
+                            <span class="badge badge-primary mr-2">Q{{ forloop.counter }}</span>
+                            {{ q.question_text }}
+                            <span class="text-muted small ml-2">({{ q.marks }} mark{{ q.marks|pluralize }})</span>
+                        </p>
+
+                        {% if q.question_type == 'MCQ' or q.question_type == 'MSQ' or q.question_type == 'TRUE_FALSE' %}
+                            {% for opt in q.options_list %}
+                            <div class="d-flex align-items-center mb-2">
+                                <input type="{% if q.question_type == 'MSQ' %}checkbox{% else %}radio{% endif %}"
+                                       name="question_{{ q.id }}"
+                                       value="{{ opt.id }}"
+                                       id="opt_{{ opt.id }}"
+                                       class="mr-2"
+                                       style="cursor:pointer;width:16px;height:16px;">
+                                <label for="opt_{{ opt.id }}" class="option-label flex-grow-1 mb-0">
+                                    {{ opt.option_text }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        {% elif q.question_type == 'SHORT_ANSWER' %}
+                            <textarea name="question_{{ q.id }}" class="form-control" rows="3"
+                                      placeholder="Type your answer here…"></textarea>
+                        {% elif q.question_type == 'NUMERICAL' %}
+                            <input type="number" name="question_{{ q.id }}" class="form-control"
+                                   placeholder="Enter numerical answer…" step="any">
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="font-weight-700 mb-3">Submit Your Work</h6>
+                        <p class="text-muted">This assessment requires a file submission.</p>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" name="submission_file" id="submissionFile">
+                            <label class="custom-file-label" for="submissionFile">Choose file…</label>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-accent btn-lg btn-block">
+                <i class="fas fa-paper-plane mr-2"></i>Submit Assessment
+            </button>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card sticky-top" style="top:80px;">
+            <div class="card-header text-white" style="background:#0C2340;">
+                <i class="fas fa-stopwatch mr-2"></i>{% if assessment.duration_minutes %}Time Remaining{% else %}Assessment Info{% endif %}
+            </div>
+            <div class="card-body text-center">
+                {% if assessment.duration_minutes %}
+                <div id="timer">{{ assessment.duration_minutes }}:00</div>
+                <p class="text-muted small mt-2">Auto-submits when time expires</p>
+                {% endif %}
+                <div class="d-flex justify-content-center mt-2" style="gap:1.5rem;">
+                    <div class="text-center">
+                        <p class="font-weight-700 mb-0">{{ questions|length }}</p>
+                        <small class="text-muted">Questions</small>
+                    </div>
+                    <div class="text-center">
+                        <p class="font-weight-700 mb-0">{{ assessment.passing_score }}%</p>
+                        <small class="text-muted">Pass mark</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if assessment.duration_minutes %}
+let remaining = {{ assessment.duration_minutes }} * 60;
+const timerEl = document.getElementById('timer');
+const form = document.getElementById('assessment-form');
+function tick() {
+    const m = Math.floor(remaining / 60).toString().padStart(2,'0');
+    const s = (remaining % 60).toString().padStart(2,'0');
+    timerEl.textContent = `${m}:${s}`;
+    if (remaining <= 0) { form.submit(); return; }
+    remaining--;
+    setTimeout(tick, 1000);
+}
+tick();
+{% endif %}
+
+$('.custom-file-input').on('change', function() {
+    $(this).next('.custom-file-label').text(this.files[0]?.name || 'Choose file…');
+});
+</script>
+{% endblock %}

@@ -1,123 +1,241 @@
 {% extends 'users/base.html' %}
-{% block title %}Analytics Dashboard - CEMS{% endblock %}
+{% block title %}Analytics Dashboard — CEMS{% endblock %}
+
 {% block content %}
-<h2 class="mb-4"><i class="fas fa-chart-bar text-primary mr-2"></i>Analytics Dashboard</h2>
+<div class="page-header">
+    <h2><i class="fas fa-chart-line mr-2 text-primary"></i>Analytics Dashboard</h2>
+    <p>Real-time insights and data-driven event performance metrics</p>
+</div>
 
 <!-- KPI Cards -->
 <div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary shadow">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#0C2340,#1a3a5c);">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="h2 mb-0">{{ total_events }}</div><small>Total Events</small>
+                        <p class="mb-1 small" style="opacity:.75;">Total Events</p>
+                        <h2 class="mb-0">{{ total_events }}</h2>
                     </div>
-                    <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+                    <i class="fas fa-calendar-alt stat-icon"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success shadow">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#28a745,#20c997);">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="h2 mb-0">{{ approved_events }}</div><small>Approved Events</small>
+                        <p class="mb-1 small" style="opacity:.75;">Approved Events</p>
+                        <h2 class="mb-0">{{ approved_events }}</h2>
                     </div>
-                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    <i class="fas fa-check-circle stat-icon"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-warning shadow">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#EAB308,#ca9f07);">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="h2 mb-0">{{ pending_events }}</div><small>Pending Review</small>
+                        <p class="mb-1 small" style="opacity:.75;">Pending Review</p>
+                        <h2 class="mb-0">{{ pending_events }}</h2>
                     </div>
-                    <i class="fas fa-hourglass-half fa-3x opacity-50"></i>
+                    <i class="fas fa-hourglass-half stat-icon"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-info shadow">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#6f42c1,#8b5cf6);">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="h2 mb-0">₹{{ total_budget|floatformat:0 }}</div><small>Total Budget</small>
+                        <p class="mb-1 small" style="opacity:.75;">Total Budget</p>
+                        <h2 class="mb-0">₹{{ total_budget|floatformat:0 }}</h2>
                     </div>
-                    <i class="fas fa-rupee-sign fa-3x opacity-50"></i>
+                    <i class="fas fa-rupee-sign stat-icon"></i>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Second row stats -->
 <div class="row mb-4">
-    <!-- Events by Dept Chart -->
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Events by Department</h5>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#17a2b8,#20c9a8);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Total Registrations</p>
+                        <h2 class="mb-0">{{ total_registrations|default:0 }}</h2>
+                    </div>
+                    <i class="fas fa-users stat-icon"></i>
+                </div>
             </div>
-            <div class="card-body"><canvas id="deptChart" height="250"></canvas></div>
         </div>
     </div>
-    <!-- Assessment Stats -->
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Assessment Performance</h5>
-            </div>
-            <div class="card-body text-center">
-                <div class="row mt-3">
-                    <div class="col-4">
-                        <div class="h3 text-primary">{{ total_assessments }}</div>
-                        <p class="text-muted small">Total Assessments</p>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#fd7e14,#e65c00);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Total Assessments</p>
+                        <h2 class="mb-0">{{ total_assessments }}</h2>
                     </div>
-                    <div class="col-4">
-                        <div class="h3 text-success">{{ submission_rate }}%</div>
-                        <p class="text-muted small">Submission Rate</p>
-                    </div>
-                    <div class="col-4">
-                        <div class="h3 text-info">{{ avg_score }}</div>
-                        <p class="text-muted small">Avg Score</p>
-                    </div>
+                    <i class="fas fa-tasks stat-icon"></i>
                 </div>
-                <canvas id="assessChart" height="200" class="mt-3"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#dc3545,#c0392b);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Submission Rate</p>
+                        <h2 class="mb-0">{{ submission_rate }}%</h2>
+                    </div>
+                    <i class="fas fa-paper-plane stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-white" style="background:linear-gradient(135deg,#20c997,#0d9488);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 small" style="opacity:.75;">Avg Score</p>
+                        <h2 class="mb-0">{{ avg_score }}%</h2>
+                    </div>
+                    <i class="fas fa-star stat-icon"></i>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Department Stats Table -->
-<div class="card shadow-sm">
-    <div class="card-header bg-white">
-        <h5 class="mb-0">Department Breakdown</h5>
+<!-- Charts row 1 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-chart-bar mr-2 text-primary"></i>Events by Department
+            </div>
+            <div class="card-body">
+                <canvas id="deptChart" height="220"></canvas>
+            </div>
+        </div>
     </div>
-    <div class="card-body p-0">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-chart-pie mr-2 text-success"></i>Event Status Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts row 2 -->
+<div class="row mb-4">
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-chart-line mr-2 text-warning"></i>Assessment Performance
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <h3 class="font-weight-800 text-primary">{{ total_assessments }}</h3>
+                        <p class="text-muted small mb-0">Assessments</p>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="font-weight-800 text-success">{{ submission_rate }}%</h3>
+                        <p class="text-muted small mb-0">Submission Rate</p>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="font-weight-800 text-info">{{ avg_score }}%</h3>
+                        <p class="text-muted small mb-0">Avg Score</p>
+                    </div>
+                </div>
+                <canvas id="assessChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header font-weight-700">
+                <i class="fas fa-brain mr-2 text-danger"></i>AI Approval Insights
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">Data-driven analysis of recent event proposals vs historical data.</p>
+                {% if approval_insights %}
+                    {% for insight in approval_insights %}
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mr-3 flex-shrink-0"
+                             style="width:38px;height:38px;background:{% if 'Strongly' in insight.recommendation %}#d1e7dd{% elif 'Recommended' in insight.recommendation %}#cfe2ff{% elif 'Needs' in insight.recommendation %}#fff3cd{% else %}#f8d7da{% endif %};">
+                            <i class="fas fa-{% if 'Strongly' in insight.recommendation %}thumbs-up text-success{% elif 'Recommended' in insight.recommendation %}check text-primary{% elif 'Needs' in insight.recommendation %}exclamation text-warning{% else %}thumbs-down text-danger{% endif %} fa-sm"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 font-weight-600 small">{{ insight.event_name }}</p>
+                            <span class="badge badge-{% if 'Strongly' in insight.recommendation %}success{% elif 'Recommended' in insight.recommendation %}primary{% elif 'Needs' in insight.recommendation %}warning{% else %}danger{% endif %} small">
+                                {{ insight.recommendation }}
+                            </span>
+                            <span class="text-muted small ml-1">{{ insight.confidence|floatformat:0 }}% confidence</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-database fa-2x mb-2 d-block"></i>
+                    <small>More events needed for AI predictions</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Breakdown Table -->
+<div class="card">
+    <div class="card-header font-weight-700">
+        <i class="fas fa-table mr-2 text-muted"></i>Department Breakdown
+    </div>
+    <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead class="thead-light">
                 <tr>
                     <th>Department</th>
                     <th>Events</th>
                     <th>Avg Attendees</th>
-                    <th>Budget (₹)</th>
+                    <th>Total Budget (₹)</th>
+                    <th>Share</th>
                 </tr>
             </thead>
             <tbody>
                 {% for dept in dept_stats %}
                 <tr>
-                    <td><strong>{{ dept.department__name|default:"Unknown" }}</strong></td>
-                    <td><span class="badge badge-primary">{{ dept.event_count }}</span></td>
+                    <td><strong>{{ dept.department__name|default:dept.name|default:"Unknown" }}</strong></td>
+                    <td><span class="badge badge-primary">{{ dept.event_count|default:dept.count }}</span></td>
                     <td>{{ dept.avg_attendees|floatformat:0 }}</td>
                     <td>₹{{ dept.total_dept_budget|default:0|floatformat:0 }}</td>
+                    <td>
+                        <div class="progress" style="height:6px;width:80px;">
+                            <div class="progress-bar bg-primary"
+                                 style="width:{% widthratio dept.event_count|default:dept.count total_events 100 %}%"></div>
+                        </div>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center py-3 text-muted">No data available</td>
+                    <td colspan="5" class="text-center text-muted py-4">No data available</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -126,45 +244,52 @@
 </div>
 {% endblock %}
 
-
 {% block extra_js %}
-{# Serialize chart data into safe JSON elements so JS has no Django template tags #}
 {{ dept_stats_json|json_script:"dept-data" }}
-
 <script>
-    // Read the pre-serialized department data
-    var deptData = JSON.parse(document.getElementById('dept-data').textContent);
-    var deptLabels = deptData.map(function (d) { return d.name || 'Unknown'; });
-    var deptCounts = deptData.map(function (d) { return d.count; });
+const deptData  = JSON.parse(document.getElementById('dept-data').textContent);
+const deptLabels = deptData.map(d => d.name || 'Unknown');
+const deptCounts = deptData.map(d => d.count);
+const palette = ['#0C2340','#EAB308','#28a745','#dc3545','#6f42c1','#17a2b8','#fd7e14','#20c997'];
 
-    new Chart(document.getElementById('deptChart'), {
-        type: 'bar',
-        data: {
-            labels: deptLabels,
-            datasets: [{
-                label: 'Events',
-                data: deptCounts,
-                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-        }
-    });
+// Dept bar chart
+new Chart(document.getElementById('deptChart'), {
+    type: 'bar',
+    data: {
+        labels: deptLabels,
+        datasets: [{ label: 'Events', data: deptCounts,
+            backgroundColor: palette, borderRadius: 6 }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
 
-    var submissionRate = parseFloat('{{ submission_rate }}') || 0;
-    new Chart(document.getElementById('assessChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Submitted', 'Not Submitted'],
-            datasets: [{
-                data: [submissionRate, parseFloat((100 - submissionRate).toFixed(2))],
-                backgroundColor: ['#1cc88a', '#e9ecef'],
-            }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-    });
+// Status doughnut
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Approved', 'Pending', 'Rejected'],
+        datasets: [{ data: [{{ approved_events }}, {{ pending_events }},
+                            {{ total_events }} - {{ approved_events }} - {{ pending_events }}],
+            backgroundColor: ['#28a745', '#EAB308', '#dc3545'],
+            borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+});
+
+// Assessment doughnut
+const submissionRate = parseFloat('{{ submission_rate }}') || 0;
+new Chart(document.getElementById('assessChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Submitted', 'Not Submitted'],
+        datasets: [{ data: [submissionRate, Math.max(0, 100 - submissionRate)],
+            backgroundColor: ['#28a745', '#e9ecef'], borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+});
 </script>
 {% endblock %}

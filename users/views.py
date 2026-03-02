@@ -107,7 +107,49 @@ def profile_view(request):
 
 @login_required_mongo
 def dashboard_view(request):
-    return render(request, 'users/dashboard.html', {'user': request.user})
+    from events.models import Event, EventRegistration, EventAssessment, AssessmentSubmission
+    user = request.user
+    stats = {}
+    recent_events = []
+
+    try:
+        role = getattr(user, 'role', 'STUDENT')
+        if role == 'EVENT_COORDINATOR':
+            my_events = list(Event.objects(coordinator=user))
+            stats['total'] = len(my_events)
+            stats['approved'] = sum(1 for e in my_events if e.status == 'APPROVED')
+            stats['pending'] = sum(1 for e in my_events if e.status in ('PENDING', 'HOD_APPROVED'))
+            stats['registrations'] = EventRegistration.objects(event__in=my_events).count()
+            recent_events = sorted(my_events, key=lambda e: e.created_at if hasattr(e, 'created_at') else e.date, reverse=True)[:5]
+            for ev in recent_events:
+                ev.reg_count = EventRegistration.objects(event=ev).count()
+
+        elif role == 'HOD':
+            dept_events = list(Event.objects(department=getattr(user, 'department', None)))
+            stats['pending'] = sum(1 for e in dept_events if e.status == 'PENDING')
+            stats['approved'] = sum(1 for e in dept_events if e.status in ('HOD_APPROVED', 'APPROVED'))
+            stats['rejected'] = sum(1 for e in dept_events if e.status == 'REJECTED')
+
+        elif role == 'PRINCIPAL':
+            all_events = list(Event.objects())
+            stats['total'] = len(all_events)
+            stats['pending'] = sum(1 for e in all_events if e.status == 'HOD_APPROVED')
+            stats['approved'] = sum(1 for e in all_events if e.status == 'APPROVED')
+            stats['rejected'] = sum(1 for e in all_events if e.status == 'REJECTED')
+
+        else:  # STUDENT
+            my_regs = list(EventRegistration.objects(student=user))
+            stats['registered'] = len(my_regs)
+            stats['certificates'] = sum(1 for r in my_regs if r.certificate_generated)
+            all_approved = Event.objects(status='APPROVED').count()
+            stats['available'] = max(0, all_approved - len(my_regs))
+            reg_event_ids = [r.event.id for r in my_regs if r.event]
+            assessments = EventAssessment.objects(event__in=[r.event for r in my_regs if r.event])
+            stats['assessments'] = assessments.count()
+    except Exception:
+        pass
+
+    return render(request, 'users/dashboard.html', {'user': user, 'stats': stats, 'recent_events': recent_events})
 
 
 def redirect_by_role(user):
