@@ -2,19 +2,19 @@
 {% block title %}My Events — CEMS{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="page-header mb-0">
+<div class="page-header-row">
+    <div class="page-header">
         <h2><i class="fas fa-list-alt mr-2 text-primary"></i>My Events</h2>
         <p>Events you have created and submitted for approval</p>
     </div>
-    <a href="{% url 'create_event' %}" class="btn btn-accent">
+    <a href="{% url 'create_event' %}" class="btn btn-accent flex-shrink-0">
         <i class="fas fa-plus mr-1"></i>Create Event
     </a>
 </div>
 
 <!-- Stats Row -->
 <div class="row mb-4">
-    <div class="col-md-3 mb-2">
+    <div class="col-6 col-md-3 mb-2">
         <div class="card stat-card text-white" style="background:linear-gradient(135deg,#0C2340,#1a3a5c);">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -27,7 +27,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-2">
+    <div class="col-6 col-md-3 mb-2">
         <div class="card stat-card text-white" style="background:linear-gradient(135deg,#EAB308,#ca9f07);">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -40,7 +40,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-2">
+    <div class="col-6 col-md-3 mb-2">
         <div class="card stat-card text-white" style="background:linear-gradient(135deg,#28a745,#20c997);">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center justify-content-between">
@@ -53,7 +53,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-2">
+    <div class="col-6 col-md-3 mb-2">
         <div class="card stat-card text-white" style="background:linear-gradient(135deg,#dc3545,#e8503b);">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center justify-content-between">
