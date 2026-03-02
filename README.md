@@ -20,7 +20,7 @@
 
 The app is deployed on **Render** and connected to **MongoDB Atlas**.
 
-> **URL:** *(add your Render URL here after deployment)*
+> **URL:** *https://the-application-of-data-analytics-model.onrender.com*
 
 ---
 
