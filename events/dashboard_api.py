@@ -1,71 +1,57 @@
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
+
 from .models import Event, EventRegistration, EventAssessment, AssessmentSubmission, EventFeedback
+from users.models import CustomUser
+from users.views import login_required_mongo as login_required
+
 
 @login_required
 def get_coordinator_dashboard_data(request):
-    """API endpoint to get real-time data for coordinator dashboard"""
     if request.user.role != 'EVENT_COORDINATOR':
         return JsonResponse({'success': False, 'message': 'Access denied'})
-    
-    # Get events created by this coordinator
-    events = Event.objects.filter(coordinator=request.user)
-    
-    # Calculate dashboard metrics
-    my_events_count = events.count()
-    approved_events_count = events.filter(status='PRINCIPAL_APPROVED').count()
-    pending_events_count = events.filter(status__in=['PENDING', 'HOD_APPROVED']).count()
-    
-    # Get event participation data
+
+    events = list(Event.objects(coordinator=request.user))
+    my_events_count = len(events)
+    approved_events_count = sum(1 for e in events if e.status == 'PRINCIPAL_APPROVED')
+    pending_events_count = sum(1 for e in events if e.status in ('PENDING', 'HOD_APPROVED'))
+
+    approved_events = [e for e in events if e.status == 'PRINCIPAL_APPROVED'][:5]
     event_participation = {}
-    for event in events.filter(status='PRINCIPAL_APPROVED')[:5]:  # Get top 5 events
-        event_participation[event.event_name] = EventRegistration.objects.filter(event=event).count()
-    
-    # Get assessment completion data
+    for event in approved_events:
+        event_participation[event.event_name] = EventRegistration.objects(event=event).count()
+
     assessment_completion = {}
-    for event in events.filter(status='PRINCIPAL_APPROVED')[:5]:  # Get top 5 events
-        assessments = EventAssessment.objects.filter(event=event)
-        if assessments.exists():
-            total_possible_submissions = assessments.count() * EventRegistration.objects.filter(event=event).count()
-            if total_possible_submissions > 0:
-                actual_submissions = AssessmentSubmission.objects.filter(assessment__event=event).count()
-                completion_rate = (actual_submissions / total_possible_submissions) * 100
-                assessment_completion[event.event_name] = round(completion_rate, 1)
-    
-    # Get event timeline data (events per month)
+    for event in approved_events:
+        assessments = list(EventAssessment.objects(event=event))
+        if assessments:
+            reg_count = EventRegistration.objects(event=event).count()
+            total_possible = len(assessments) * reg_count
+            if total_possible > 0:
+                assessment_ids = [a.id for a in assessments]
+                actual = AssessmentSubmission.objects(assessment__in=assessment_ids).count()
+                assessment_completion[event.event_name] = round((actual / total_possible) * 100, 1)
+
     current_year = timezone.now().year
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    event_timeline = []
-    
-    for i, month in enumerate(months, 1):
-        count = events.filter(
-            date__year=current_year,
-            date__month=i
-        ).count()
-        event_timeline.append({'month': month, 'count': count})
-    
-    # Get event feedback data
-    feedback_data = {
-        'Excellent': 0,
-        'Good': 0,
-        'Average': 0,
-        'Poor': 0
-    }
-    
-    for event in events:
-        excellent = EventFeedback.objects.filter(event=event, rating__gte=4).count()
-        good = EventFeedback.objects.filter(event=event, rating=3).count()
-        average = EventFeedback.objects.filter(event=event, rating=2).count()
-        poor = EventFeedback.objects.filter(event=event, rating=1).count()
-        
-        feedback_data['Excellent'] += excellent
-        feedback_data['Good'] += good
-        feedback_data['Average'] += average
-        feedback_data['Poor'] += poor
-    
+    event_timeline = [
+        {'month': month, 'count': sum(1 for e in events if e.date and e.date.year == current_year and e.date.month == i)}
+        for i, month in enumerate(months, 1)
+    ]
+
+    feedback_data = {'Excellent': 0, 'Good': 0, 'Average': 0, 'Poor': 0}
+    event_ids = [e.id for e in events]
+    for fb in EventFeedback.objects(event__in=event_ids):
+        if fb.rating >= 4:
+            feedback_data['Excellent'] += 1
+        elif fb.rating == 3:
+            feedback_data['Good'] += 1
+        elif fb.rating == 2:
+            feedback_data['Average'] += 1
+        else:
+            feedback_data['Poor'] += 1
+
     return JsonResponse({
         'success': True,
         'myEvents': my_events_count,
@@ -74,60 +60,55 @@ def get_coordinator_dashboard_data(request):
         'eventParticipation': event_participation,
         'assessmentCompletion': assessment_completion,
         'eventTimeline': event_timeline,
-        'eventFeedback': feedback_data
+        'eventFeedback': feedback_data,
     })
+
 
 @login_required
 def get_hod_dashboard_data(request):
-    """API endpoint to get real-time data for HOD dashboard"""
     if request.user.role != 'HOD':
         return JsonResponse({'success': False, 'message': 'Access denied'})
-    
-    # Get events from this department
-    events = Event.objects.filter(department=request.user.department)
-    
-    # Calculate dashboard metrics
-    department_events_count = events.count()
-    pending_approvals_count = events.filter(status='PENDING').count()
-    
-    # Get student participation count
-    student_participation_count = EventRegistration.objects.filter(
-        event__in=events
-    ).values('student').distinct().count()
-    
-    # Get event status distribution
+
+    events = list(Event.objects(department=request.user.department))
+    department_events_count = len(events)
+    pending_approvals_count = sum(1 for e in events if e.status == 'PENDING')
+
+    event_ids = [e.id for e in events]
+    student_ids = set(
+        str(r.student.id)
+        for r in EventRegistration.objects(event__in=event_ids)
+        if r.student
+    )
+    student_participation_count = len(student_ids)
+
     event_status = {
-        'Pending': events.filter(status='PENDING').count(),
-        'HOD Approved': events.filter(status='HOD_APPROVED').count(),
-        'Principal Approved': events.filter(status='PRINCIPAL_APPROVED').count()
+        'Pending': sum(1 for e in events if e.status == 'PENDING'),
+        'HOD Approved': sum(1 for e in events if e.status == 'HOD_APPROVED'),
+        'Principal Approved': sum(1 for e in events if e.status == 'PRINCIPAL_APPROVED'),
     }
-    
-    # Get monthly events data
+
     current_year = timezone.now().year
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    monthly_events = []
-    
-    for i, month in enumerate(months, 1):
-        count = events.filter(
-            date__year=current_year,
-            date__month=i
-        ).count()
-        monthly_events.append({'month': month, 'count': count})
-    
-    # Get assessment performance data
+    monthly_events = [
+        {'month': month, 'count': sum(1 for e in events if e.date and e.date.year == current_year and e.date.month == i)}
+        for i, month in enumerate(months, 1)
+    ]
+
     assessment_performance = {}
-    for event in events.filter(status='PRINCIPAL_APPROVED')[:5]:  # Get top 5 events
-        submissions = AssessmentSubmission.objects.filter(assessment__event=event)
-        if submissions.exists():
-            avg_score = submissions.aggregate(Avg('score'))['score__avg'] or 0
-            assessment_performance[event.event_name] = round(avg_score, 1)
-    
-    # Get event mode distribution
+    for event in [e for e in events if e.status == 'PRINCIPAL_APPROVED'][:5]:
+        assessment_ids = [a.id for a in EventAssessment.objects(event=event)]
+        if assessment_ids:
+            subs = list(AssessmentSubmission.objects(assessment__in=assessment_ids))
+            if subs:
+                scores = [s.score for s in subs if s.score is not None]
+                if scores:
+                    assessment_performance[event.event_name] = round(sum(scores) / len(scores), 1)
+
     event_modes = {
-        'Online': events.filter(mode='ONLINE').count(),
-        'Offline': events.filter(mode='OFFLINE').count()
+        'Online': sum(1 for e in events if e.mode == 'ONLINE'),
+        'Offline': sum(1 for e in events if e.mode == 'OFFLINE'),
     }
-    
+
     return JsonResponse({
         'success': True,
         'departmentEvents': department_events_count,
@@ -136,66 +117,60 @@ def get_hod_dashboard_data(request):
         'eventStatus': event_status,
         'monthlyEvents': monthly_events,
         'assessmentPerformance': assessment_performance,
-        'eventModes': event_modes
+        'eventModes': event_modes,
     })
+
 
 @login_required
 def get_principal_dashboard_data(request):
-    """API endpoint to get real-time data for Principal dashboard"""
     if request.user.role != 'PRINCIPAL':
         return JsonResponse({'success': False, 'message': 'Access denied'})
-    
-    # Get all events
-    events = Event.objects.all()
-    
-    # Calculate dashboard metrics
-    total_events_count = events.count()
-    pending_approvals_count = events.filter(status='HOD_APPROVED').count()
-    approved_events_count = events.filter(status='PRINCIPAL_APPROVED').count()
-    
-    # Get department-wise event counts
-    dept_event_counts = events.values('department').annotate(count=Count('id'))
-    department_events = {}
-    for dept in dept_event_counts:
-        department_events[dict(Event.coordinator.field.related_model.DEPARTMENT_CHOICES)[dept['department']]] = dept['count']
-    
-    # Get budget allocation by department
-    dept_budget_allocation = events.filter(status='PRINCIPAL_APPROVED').values('department').annotate(total=Sum('budget'))
-    budget_by_department = {}
-    for dept in dept_budget_allocation:
-        budget_by_department[dict(Event.coordinator.field.related_model.DEPARTMENT_CHOICES)[dept['department']]] = float(dept['total'] or 0)
-    
-    # Get monthly event counts
+
+    events = list(Event.objects())
+    total_events_count = len(events)
+    pending_approvals_count = sum(1 for e in events if e.status == 'HOD_APPROVED')
+    approved_events_count = sum(1 for e in events if e.status == 'PRINCIPAL_APPROVED')
+
+    from collections import defaultdict
+    dept_counts = defaultdict(int)
+    for e in events:
+        dept_counts[e.department] += 1
+    dept_labels = dict(CustomUser.DEPARTMENT_CHOICES)
+    department_events = {dept_labels.get(dept, dept): cnt for dept, cnt in dept_counts.items()}
+
+    dept_budgets = defaultdict(float)
+    for e in events:
+        if e.status == 'PRINCIPAL_APPROVED':
+            dept_budgets[e.department] += float(e.budget or 0)
+    budget_by_department = {dept_labels.get(dept, dept): total for dept, total in dept_budgets.items()}
+
     current_year = timezone.now().year
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    monthly_events = []
-    
-    for i, month in enumerate(months, 1):
-        count = events.filter(
-            date__year=current_year,
-            date__month=i
-        ).count()
-        monthly_events.append({'month': month, 'count': count})
-    
-    # Get event mode distribution
+    monthly_events = [
+        {'month': month, 'count': sum(1 for e in events if e.date and e.date.year == current_year and e.date.month == i)}
+        for i, month in enumerate(months, 1)
+    ]
+
     event_modes = {
-        'Online': events.filter(mode='ONLINE').count(),
-        'Offline': events.filter(mode='OFFLINE').count()
+        'Online': sum(1 for e in events if e.mode == 'ONLINE'),
+        'Offline': sum(1 for e in events if e.mode == 'OFFLINE'),
     }
-    
-    # Get recent events (last 30 days)
+
     thirty_days_ago = timezone.now().date() - timedelta(days=30)
-    recent_events = events.filter(date__gte=thirty_days_ago).order_by('-date')[:5]
-    recent_events_data = []
-    
-    for event in recent_events:
-        recent_events_data.append({
-            'name': event.event_name,
-            'department': dict(Event.coordinator.field.related_model.DEPARTMENT_CHOICES)[event.department],
-            'date': event.date.strftime('%d %b %Y'),
-            'status': dict(Event.STATUS_CHOICES)[event.status]
-        })
-    
+    recent_events_data = [
+        {
+            'name': e.event_name,
+            'department': dept_labels.get(e.department, e.department or ''),
+            'date': e.date.strftime('%d %b %Y') if e.date else '',
+            'status': dict(Event.STATUS_CHOICES).get(e.status, e.status),
+        }
+        for e in sorted(
+            [e for e in events if e.date and e.date >= thirty_days_ago],
+            key=lambda x: x.date,
+            reverse=True,
+        )[:5]
+    ]
+
     return JsonResponse({
         'success': True,
         'totalEvents': total_events_count,
@@ -205,78 +180,64 @@ def get_principal_dashboard_data(request):
         'budgetByDepartment': budget_by_department,
         'monthlyEvents': monthly_events,
         'eventModes': event_modes,
-        'recentEvents': recent_events_data
+        'recentEvents': recent_events_data,
     })
+
 
 @login_required
 def get_student_dashboard_data(request):
-    """API endpoint to get real-time data for Student dashboard"""
     if request.user.role != 'STUDENT':
         return JsonResponse({'success': False, 'message': 'Access denied'})
-    
-    # Get events the student is registered for
-    registered_events = EventRegistration.objects.filter(student=request.user)
-    registered_events_count = registered_events.count()
-    
-    # Get upcoming events the student is registered for
-    upcoming_events = registered_events.filter(
-        event__date__gte=timezone.now().date()
-    ).order_by('event__date')[:5]
-    
-    upcoming_events_data = []
-    for reg in upcoming_events:
-        upcoming_events_data.append({
-            'name': reg.event.event_name,
-            'date': reg.event.date.strftime('%d %b %Y'),
-            'time': reg.event.time.strftime('%I:%M %p'),
-            'mode': dict(Event.MODE_CHOICES)[reg.event.mode],
-            'venue': reg.event.venue if reg.event.venue else 'Online'
-        })
-    
-    # Get pending assessments
+
+    registrations = list(EventRegistration.objects(student=request.user))
+    registered_events_count = len(registrations)
+
+    today = timezone.now().date()
+    upcoming = sorted(
+        [r for r in registrations if r.event and r.event.date and r.event.date >= today],
+        key=lambda r: r.event.date,
+    )[:5]
+
+    upcoming_events_data = [{
+        'name': r.event.event_name,
+        'date': r.event.date.strftime('%d %b %Y'),
+        'time': str(r.event.time),
+        'mode': dict(Event.MODE_CHOICES).get(r.event.mode, r.event.mode),
+        'venue': r.event.venue if r.event.venue else 'Online',
+    } for r in upcoming]
+
     pending_assessments = []
-    for reg in registered_events:
-        assessments = EventAssessment.objects.filter(
-            event=reg.event,
-            due_date__gte=timezone.now()
-        )
-        for assessment in assessments:
-            # Check if student has already submitted
-            submission_exists = AssessmentSubmission.objects.filter(
-                assessment=assessment,
-                student=request.user
-            ).exists()
-            
-            if not submission_exists:
+    now = timezone.now()
+    for reg in registrations:
+        if not reg.event:
+            continue
+        for assessment in EventAssessment.objects(event=reg.event, due_date__gte=now):
+            if not AssessmentSubmission.objects(assessment=assessment, student=request.user).first():
                 pending_assessments.append({
                     'title': assessment.title,
                     'event': assessment.event.event_name,
                     'due_date': assessment.due_date.strftime('%d %b %Y, %I:%M %p'),
-                    'id': assessment.id
+                    'id': str(assessment.id),
                 })
-    
-    # Get certificates
-    certificates = registered_events.filter(certificate_generated=True).count()
-    
-    # Get assessment performance
-    submissions = AssessmentSubmission.objects.filter(student=request.user)
-    avg_score = submissions.aggregate(Avg('score'))['score__avg'] or 0
-    
-    # Get event participation by month
+
+    certificates = sum(1 for r in registrations if r.certificate_generated)
+
+    submissions = list(AssessmentSubmission.objects(student=request.user))
+    scores = [s.score for s in submissions if s.score is not None]
+    avg_score = sum(scores) / len(scores) if scores else 0
+
     current_year = timezone.now().year
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    monthly_participation = []
-    
-    for i, month in enumerate(months, 1):
-        count = registered_events.filter(
-            event__date__year=current_year,
-            event__date__month=i
-        ).count()
-        monthly_participation.append({'month': month, 'count': count})
-    
-    # Get feedback given by student
-    feedback_given = EventFeedback.objects.filter(student=request.user).count()
-    
+    monthly_participation = [
+        {'month': month, 'count': sum(
+            1 for r in registrations
+            if r.event and r.event.date and r.event.date.year == current_year and r.event.date.month == i
+        )}
+        for i, month in enumerate(months, 1)
+    ]
+
+    feedback_given = EventFeedback.objects(student=request.user).count()
+
     return JsonResponse({
         'success': True,
         'registeredEvents': registered_events_count,
@@ -285,5 +246,5 @@ def get_student_dashboard_data(request):
         'certificates': certificates,
         'avgScore': round(avg_score, 1),
         'monthlyParticipation': monthly_participation,
-        'feedbackGiven': feedback_given
+        'feedbackGiven': feedback_given,
     })

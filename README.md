@@ -4,7 +4,7 @@
 
 ![Django](https://img.shields.io/badge/Django-5.0.1-green?style=for-the-badge&logo=django)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)
-![Supabase](https://img.shields.io/badge/Database-Supabase-3ECF8E?style=for-the-badge&logo=supabase)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?style=for-the-badge&logo=mongodb)
 ![Bootstrap](https://img.shields.io/badge/UI-Bootstrap_4-purple?style=for-the-badge&logo=bootstrap)
 
 **A full-stack Django web application for managing campus events, approvals, assessments, and certificates.**
@@ -19,6 +19,7 @@
 
 ### Prerequisites
 - Python 3.10+
+- MongoDB 6+ running on `localhost:27017`
 - Git
 
 ### 1. Clone the repository
@@ -38,12 +39,19 @@ source .venv/bin/activate   # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Run migrations
+### 4. Configure environment
 ```bash
-python manage.py migrate
+cp .env.example .env
+# Edit .env if needed — defaults work for local MongoDB
 ```
 
-### 5. Start the development server
+### 5. Run setup (Django sessions + seed demo users)
+```bash
+python manage.py migrate --run-syncdb
+python manage.py seed_users
+```
+
+### 6. Start the development server
 ```bash
 python manage.py runserver
 ```
@@ -54,29 +62,20 @@ Open your browser and go to **http://127.0.0.1:8000/login/**
 
 ## 🔐 Demo Login Credentials
 
-> These accounts were created via the Supabase MCP server during project setup.
-
 | Role | Username | Password | Access |
 |---|---|---|---|
-| 🔴 **Principal** (Super Admin) | `admin` | `Admin@123` | Full admin dashboard, analytics, approve/reject all events |
+| 🔴 **Principal** (Admin) | `admin` | `Admin@123` | Full analytics, approve/reject all events |
 | 🔵 **Student** | `testuser1` | `password123` | Register for events, take assessments, download certificates |
 
 ### Create your own account
 Visit **http://127.0.0.1:8000/register/** and fill in the form.  
 Select your role from: `Student`, `Event Coordinator`, `HOD`, or `Principal`.
 
-### Django Admin Panel
-Access the full admin panel at **http://127.0.0.1:8000/admin/**
-- **Username:** `admin`
-- **Password:** `Admin@123`
-
 ---
 
 ## ✨ Features
 
 ### 🗂 Event Lifecycle Management
-The entire event lifecycle is managed through a multi-level approval chain:
-
 ```
 Event Coordinator Creates Event
          ↓
@@ -90,76 +89,43 @@ Event Coordinator Creates Event
 - **Create & Edit Events** — Coordinators submit online/offline events with full budget, schedule, and resource details.
 - **HOD Approval** — Department Heads review and approve/reject events with reasons.
 - **Principal Approval** — Final sign-off; Principal has a global view of all events.
-- **Rejection Reasons** — Rejection always includes a reason visible to the coordinator.
 
 ---
 
 ### 📊 Analytics Dashboard
 - **Event statistics** — total events, approved, pending, budgets
-- **Department breakdown** — per-department event counts and average attendees
+- **Department breakdown** — per-department event counts
 - **Chart.js** visualizations with bar and doughnut charts
 - Available to **HOD** (department-filtered) and **Principal** (global view)
 
 ---
 
 ### 📝 Assessments & Grading
-- Coordinators create **custom quizzes** for events with MCQ and numerical questions.
+- Coordinators create **custom quizzes** for events with MCQ, MSQ, and NAT questions.
 - Students **take assessments** after attending events.
-- AI-assisted grading for numerical answers (`events/ai_assessment.py`)
+- AI-assisted grading for all question types.
 - Coordinators can view **submission reports** and manually grade answers.
-- Students see their **assessment results** and scores.
 
 ---
 
 ### 🏅 Certificates
-- Automatic **PDF certificate generation** for students who attended approved events.
+- Automatic **PDF certificate generation** for students who passed assessments.
 - Uses **ReportLab** + **Pillow** for high-quality PDF output.
 - Includes **QR code** on each certificate for verification.
-- Students download certificates directly from their dashboard.
 
 ---
 
-### 👤 Role-Based Access Control
+## 🌐 Cloud Database (MongoDB Atlas)
 
-| Feature | Student | Coordinator | HOD | Principal |
-|---|:---:|:---:|:---:|:---:|
-| Browse Events | ✅ | | | |
-| Register for Events | ✅ | | | |
-| Take Assessments | ✅ | | | |
-| Download Certificates | ✅ | | | |
-| Create Events | | ✅ | | |
-| Manage Own Events | | ✅ | | |
-| Create Assessments | | ✅ | | |
-| Approve (Dept.) Events | | | ✅ | |
-| View Dept. Analytics | | | ✅ | |
-| Final Event Approval | | | | ✅ |
-| View All Analytics | | | | ✅ |
-| Django Admin | | | | ✅ |
+This project uses **MongoDB Atlas** for the production database.
 
----
-
-### 🔒 Security Features
-- **Session timeout** — Sessions expire after 30 minutes of inactivity
-- **CSRF protection** — Django's built-in CSRF middleware
-- **LocalhostOnly middleware** — Restricts access to localhost in dev
-- **WhiteNoise** — Secure static file serving in production
-- **Environment-based DEBUG** — `DEBUG=False` when deployed to Render
-
----
-
-## 🌐 Cloud Database (Supabase)
-
-This project uses **Supabase PostgreSQL** for the production database.
-
-- **Project name:** `cems-db`
-- **Region:** `ap-south-1` (Mumbai)
-- **Project URL:** `https://ojfyotnxnmbomzhdpuxd.supabase.co`
-
-To connect, set the `DATABASE_URL` environment variable in Render:
+1. Create a free cluster at [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Create a database named **`eventwebsite`**
+3. Get your connection string:
 ```
-postgresql://postgres:[YOUR-PASSWORD]@db.ojfyotnxnmbomzhdpuxd.supabase.co:5432/postgres
+mongodb+srv://<username>:<password>@<cluster>.mongodb.net/eventwebsite?retryWrites=true&w=majority
 ```
-*(Get the full connection string from [Supabase Dashboard → cems-db → Connect](https://supabase.com/dashboard/project/ojfyotnxnmbomzhdpuxd/settings/database))*
+4. Set it as `MONGODB_URI` on Render (see below).
 
 ---
 
@@ -172,8 +138,15 @@ postgresql://postgres:[YOUR-PASSWORD]@db.ojfyotnxnmbomzhdpuxd.supabase.co:5432/p
    - **Build Command:** `./build.sh`
    - **Start Command:** `gunicorn dems.wsgi:application`
 5. Add environment variables:
-   - `DATABASE_URL` = *(Supabase connection string)*
+   - `MONGODB_URI` = *(MongoDB Atlas connection string pointing to `eventwebsite` database)*
    - `RENDER` = `true`
+   - `SECRET_KEY` = *(a strong random secret key)*
+
+The `build.sh` script will automatically:
+- Install dependencies
+- Collect static files
+- Create Django session tables (SQLite)
+- Seed demo users (`admin` / `Admin@123` and `testuser1` / `password123`) into MongoDB
 
 ---
 
@@ -182,8 +155,7 @@ postgresql://postgres:[YOUR-PASSWORD]@db.ojfyotnxnmbomzhdpuxd.supabase.co:5432/p
 | Layer | Technology |
 |---|---|
 | Backend | Python 3.12, Django 5.0.1 |
-| Database (local) | SQLite3 |
-| Database (production) | Supabase PostgreSQL |
+| Database | MongoDB (MongoEngine ODM) |
 | Frontend | Bootstrap 4, Chart.js |
 | Forms | django-crispy-forms + crispy-bootstrap4 |
 | Analytics | scikit-learn, pandas, matplotlib, seaborn |
@@ -201,43 +173,31 @@ postgresql://postgres:[YOUR-PASSWORD]@db.ojfyotnxnmbomzhdpuxd.supabase.co:5432/p
 ```
 cems/
 ├── dems/                  # Django project package
-│   ├── settings.py        # Project settings (dj-database-url, whitenoise)
+│   ├── settings.py        # Project settings (MongoDB, whitenoise)
 │   ├── urls.py            # Root URL configuration
 │   └── wsgi.py
 ├── users/                 # Custom user authentication app
-│   ├── models.py          # CustomUser with role & department
+│   ├── models.py          # CustomUser (MongoEngine Document)
+│   ├── backends.py        # Custom MongoDB auth backend
 │   ├── views.py           # Login, register, profile, dashboard
-│   ├── middleware.py      # LocalhostOnly & FileIntegrity middleware
-│   └── templates/users/
-│       ├── base.html      # Shared layout with sidebar
-│       ├── login.html
-│       ├── register.html
-│       └── dashboard.html
+│   ├── middleware.py      # MongoAuthMiddleware
+│   └── management/commands/seed_users.py
 ├── events/                # Core event management app
-│   ├── models.py          # Event, Assessment, Submission, etc.
-│   ├── views.py           # All event views (create, approve, assess)
+│   ├── models.py          # Event, Assessment, Submission, etc. (MongoEngine)
+│   ├── views.py           # All event views
 │   ├── dashboard_api.py   # Analytics API endpoints
 │   ├── ai_assessment.py   # AI-powered assessment grading
-│   ├── utils.py           # Certificate, QR, PDF generation
-│   └── templates/events/
-│       ├── my_events.html
-│       ├── create_event.html
-│       ├── event_detail.html
-│       ├── available_events.html
-│       ├── analytics.html
-│       ├── hod_pending_events.html
-│       ├── certificates.html
-│       └── ... more templates
+│   └── utils.py           # Certificate, QR, PDF generation
 ├── static/                # Static assets
 ├── staticfiles/           # Collected static files (production)
 ├── build.sh               # Render deployment script
+├── .env.example           # Environment variable template
 ├── requirements.txt
-├── manage.py
-└── .gitignore
+└── manage.py
 ```
 
 ---
 
 <div align="center">
-Made with ❤️ by CMRIT Students &nbsp;|&nbsp; Powered by Django + Supabase
+Made with ❤️ by CMRIT Students &nbsp;|&nbsp; Powered by Django + MongoDB
 </div>
