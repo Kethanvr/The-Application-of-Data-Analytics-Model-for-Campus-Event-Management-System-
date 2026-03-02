@@ -18,7 +18,7 @@
 <form method="post">
     {% csrf_token %}
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-12 col-md-8">
             {% for ans in answers %}
             <div class="card mb-3">
                 <div class="card-body">
@@ -55,7 +55,7 @@
             {% endfor %}
         </div>
 
-        <div class="col-md-4">
+        <div class="col-sm-6 col-md-4">
             <div class="card sticky-top" style="top:80px;">
                 <div class="card-header font-weight-700">Override Score</div>
                 <div class="card-body">

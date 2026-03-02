@@ -1,13 +1,12 @@
 {% extends 'users/base.html' %}
 {% block title %}{% if event %}Edit Event{% else %}Create Event{% endif %} - CEMS{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">
-        <i class="fas fa-{% if event %}edit{% else %}plus-circle{% endif %} text-primary mr-2"></i>
-        {% if event %}Edit Event{% else %}Create New Event{% endif %}
-    </h2>
-    <a href="{% url 'my_events' %}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left mr-1"></i> Back to My Events
+<div class="page-header-row">
+    <div class="page-header">
+        <h2><i class="fas fa-{% if event %}edit{% else %}plus-circle{% endif %} text-primary mr-2"></i>{% if event %}Edit Event{% else %}Create New Event{% endif %}</h2>
+    </div>
+    <a href="{% url 'my_events' %}" class="btn btn-outline-secondary flex-shrink-0">
+        <i class="fas fa-arrow-left mr-1"></i>Back
     </a>
 </div>
 
@@ -16,7 +15,7 @@
         <form method="post" id="eventForm">
             {% csrf_token %}
             <div class="row">
-                <div class="col-md-8">
+                <div class="col-12 col-md-8">
                     <div class="form-group">
                         <label class="font-weight-bold">Event Name <span class="text-danger">*</span></label>
                         <input type="text" name="event_name" class="form-control form-control-lg"
@@ -24,7 +23,7 @@
                             placeholder="e.g. National Level Hackathon 2025">
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-12 col-md-4">
                     <div class="form-group">
                         <label class="font-weight-bold">Short Title <span class="text-danger">*</span></label>
                         <input type="text" name="title" class="form-control" value="{{ event.title|default:'' }}"
@@ -40,21 +39,21 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-12 col-md-4">
                     <div class="form-group">
                         <label class="font-weight-bold">Event Date <span class="text-danger">*</span></label>
                         <input type="date" name="date" class="form-control"
                             value="{{ event.date|date:'Y-m-d'|default:'' }}" required>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-12 col-md-4">
                     <div class="form-group">
                         <label class="font-weight-bold">Event Time <span class="text-danger">*</span></label>
                         <input type="time" name="time" class="form-control"
                             value="{{ event.time|time:'H:i'|default:'' }}" required>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-12 col-md-4">
                     <div class="form-group">
                         <label class="font-weight-bold">Expected Attendees <span class="text-danger">*</span></label>
                         <input type="number" name="expected_attendees" class="form-control"
@@ -94,28 +93,28 @@
             <h5 class="mb-3"><i class="fas fa-rupee-sign text-warning mr-2"></i>Budget Details</h5>
 
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="form-group">
                         <label class="font-weight-bold">Total Budget (₹)</label>
                         <input type="number" name="budget" step="0.01" class="form-control"
                             value="{{ event.budget|default:'' }}" min="0">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="form-group">
                         <label class="font-weight-bold">Registration Fee (₹)</label>
                         <input type="number" name="registration_fee" step="0.01" class="form-control"
                             value="{{ event.registration_fee|default:'0' }}" min="0">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="form-group">
                         <label class="font-weight-bold">Refreshment (₹)</label>
                         <input type="number" name="refreshment" step="0.01" class="form-control"
                             value="{{ event.refreshment|default:'0' }}" min="0">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="form-group">
                         <label class="font-weight-bold">Honorarium (₹)</label>
                         <input type="number" name="honorarium" step="0.01" class="form-control"
@@ -134,7 +133,7 @@
                     placeholder="Any other resource requirements...">{{ event.other_requirements|default:'' }}</textarea>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
+            <div class="d-flex flex-wrap justify-content-end mt-4" style="gap:.5rem;">
                 <a href="{% url 'my_events' %}" class="btn btn-outline-secondary mr-3">Cancel</a>
                 <button type="submit" class="btn btn-primary btn-lg px-5">
                     <i class="fas fa-paper-plane mr-2"></i>
